@@ -1,4 +1,10 @@
-export default (req, res) => {
-    res.write('Hey!')
-    res.end()
-}
+import express from 'express'
+
+const app = express()
+
+app.get('/', (req, res) => {
+    res.write('Test');
+    res.end();
+})
+
+export default app;

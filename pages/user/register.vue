@@ -35,7 +35,7 @@
                       </div>
                     </div>
                     <div class="panel-footer">
-                        <button class="btn btn-primary" type="submit" id="btnRegister">Submit</button>
+                        <button class="btn btn-primary" type="submit" id="btnRegister" :disabled="disableButton">Submit</button>
                         <button class="btn btn-default" type="button" @click="this.onBack">Back</button>
                     </div>
                   </div>
@@ -64,12 +64,15 @@
     export default {
         data: function() {
           return {
+              disableButton: false,
               form:{
                   username: '',
                   email: '',
                   password: '',
                   status: 0,
-                  online: 0
+                  online: 0,
+                  token: '',
+                  expired_at: ''
               },
               users: []
           };
@@ -78,43 +81,118 @@
             console.log('mounted');
         },
         created() {
-            usersRef.get().then((querySnapshot) => {
-                querySnapshot.forEach((doc) => {
-                    this.users.push(doc.data());
-                    console.log(doc.data());
-                });
-            });
         },
         methods: {
             onBack() {
                 this.$router.replace('/user/login');
             },
             onRegister() {
-                var length = this.users.length;
-                if(length) {
-                  for(var i = 0; i < length; i++) {
-                    var user = this.users[i];
-                    if(user.username === this.form.username) {
-                      alert('Your username is exists. Please choose another one.');
-                      return false;
+                this.disableButton = true;
+
+                usersRef.get().then((querySnapshot) => {
+                    querySnapshot.forEach((doc) => {
+                        this.users.push(doc.data());
+                    });
+
+                    for(var i in this.users) {
+                        var userInfo = this.users[i];
+                        if(userInfo.username === this.form.username) {
+                            alert('Your username is exists. Please choose another one.');
+                            this.disableButton = false;
+                            return false;
+                        }
+
+                        if(userInfo.email === this.form.email) {
+                            alert('Your email is exists. Please choose another one.');
+                            this.disableButton = false;
+                            return false;
+                        }
                     }
 
-                    if(user.email === this.form.email) {
-                      alert('Your email is exists. Please choose another one.');
-                      return false;
-                    }
-                  }
-                }
-                
-                this.form.password = $.md5(this.form.password);
-
-                usersRef.add(this.form).then(function(docRef) {
-                    alert('Register succeed!');
-                    window.location.reload();
-                })
-                .catch(function(error) {
-                    console.error("Error adding document: ", error);
+                    this.form.password = $.md5(this.form.password);
+                    this.form.expired_at = this.getExpired(5);
+                    this.form.token = this.generateToken(64);
+                    this.sendMail(this.form);
                 });
+                
+                
+            },
+            async sendMail(params) {
+                // console.log(params);
+                var _self = this;
+                params.confirm_link = process.env.baseUrl + "/user/confirm?token=" + params.token;
+                var res = await this.$axios.$post('api/sendmail', params);
+                if(res.status) {
+                    delete params['confirm_link'];
+                    usersRef.add(params).then(function(docRef) {
+                        _self.$router.replace('/user/register_success');
+                    })
+                    .catch(function(error) {
+                        console.error("Error adding document: ", error);
+                    });
+                }
+            },
+            generateToken(length) {
+                var text = "";
+                var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+                
+                for (var i = 0; i < length; i++)
+                    text += possible.charAt(Math.floor(Math.random() * possible.length));
+                
+                return text;
+            },
+            getExpired(minute) {
+                var date = new Date();
+                date.setMinutes(date.getMinutes() + minute);
+                date = new Date(date);
+                return date.getTime();
+                // var year = date.getFullYear();
+                // var month = date.getMonth() === 11 ? 12 : date.getMonth() + 1;
+                // month = month.toString().length == 1 ? '0' + month : month.toString();
+                // var day  = date.getDate();
+                // day = day.toString().length == 1 ? '0' + day : day.toString();
+
+                // var hour = date.getHours();
+                // hour = hour.toString().length == 1 ? '0' + hour : hour.toString();
+                // date.setMinutes(date.getMinutes() + minute);
+                // date = new Date(date);
+                // var minute = date.getMinutes();
+                // minute = minute.toString().length == 1 ? '0' + minute : minute.toString();
+                // var second = date.getSeconds();
+                // second = second.toString().length == 1 ? '0' + second : second.toString();
+            },
+            getDate(input, format) {
+                if(format === undefined) {
+                    format = 'dd/mm/yyyy hh:ii:ss';
+                }
+                var date = new Date();
+                if(input !== undefined) {
+                    var date = new Date(input);
+                }
+
+                var year = date.getFullYear();
+                var month = date.getMonth() === 11 ? 12 : date.getMonth() + 1;
+                month = month.toString().length == 1 ? '0' + month : month.toString();
+                var day  = date.getDate();
+                day = day.toString().length == 1 ? '0' + day : day.toString();
+
+                var hour = date.getHours();
+                hour = hour.toString().length == 1 ? '0' + hour : hour.toString();
+                date.setMinutes(date.getMinutes() + 5);
+                date = new Date(date);
+                var minute = date.getMinutes();
+                minute = minute.toString().length == 1 ? '0' + minute : minute.toString();
+                var second = date.getSeconds();
+                second = second.toString().length == 1 ? '0' + second : second.toString();
+
+                format = format.replace('yyyy', year);
+                format = format.replace('mm', month);
+                format = format.replace('dd', day);
+                format = format.replace('hh', hour);
+                format = format.replace('ii', minute);
+                format = format.replace('ss', second);
+
+                return format;
             }
         }
     }

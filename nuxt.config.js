@@ -1,39 +1,12 @@
 
-import express from 'express'
-import nodemailer from 'nodemailer'
-const app = express()
-
-app.get('/', (req, res) => {
-    // Validate, sanitize and send
-    var transporter =  nodemailer.createTransport({ // config mail server
-        service: 'Gmail',
-        auth: {
-            user: 'shopxeom90@gmail.com',
-            pass: 'nuzmgnanjfseyygs'
-        }
-    });
-    var mainOptions = { // thiết lập đối tượng, nội dung gửi mail
-        from: 'Vuong Luu',
-        to: 'thai.vuong@primelabo.com.vn',
-        subject: 'Test Nodemailer',
-        text: 'You recieved message from Vuong Luu',
-        html: '<p>You have got a new message</b><ul><li></ul>'
-    }
-    transporter.sendMail(mainOptions, function(err, info){
-        if (err) {
-            console.log(err);
-            res.write(err)
-            res.end()
-        } else {
-            console.log('Message sent: ' +  info.response);
-            res.write(info.response)
-            res.end()
-        }
-    });
-})
+// import sendmail from './api/sendmail';
+// import test from './api/test';
 
 export default {
   mode: 'spa',
+  env: {
+    baseUrl: process.env.BASE_URL || 'http://localhost:3000'
+  },
   /*
   ** Headers of the page
   */
@@ -77,6 +50,7 @@ export default {
   ** Nuxt.js modules
   */
   modules: [
+      '@nuxtjs/axios',
   ],
   /*
   ** Build configuration
@@ -89,6 +63,12 @@ export default {
     }
   },
   serverMiddleware: [
-    { path: '/api/test', handler: app },
+    { path: '/api/sendmail', handler: '~/api/sendmail.js' },
+    { path: '/api/test', handler: '~/api/test.js' },
   ],
+
+  axios: {
+    
+  },
+  // srcDir: 'client/'
 }

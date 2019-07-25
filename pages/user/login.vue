@@ -30,7 +30,7 @@
                                 </div>
                             </div>
                             <div class="panel-footer">
-                                    <button class="btn btn-primary" type="submit" id="btnLogin">Login</button>
+                                    <button class="btn btn-primary" type="submit" id="btnLogin" :disabled="disableButton">Login</button>
                                     <button class="btn btn-danger" type="button" @click="this.onRegister">Register</button>
                             </div>
                         </div>
@@ -59,6 +59,7 @@
     export default {
         data: function() {
           return {
+              disableButton: false,
               form:{
                   email: '',
                   password: ''
@@ -79,19 +80,37 @@
         },
         methods: {
             onLogin() {
+                this.disableButton = true;
                 var _self = this;
                 usersRef.where("email", "==", this.form.email).where("password", "==", $.md5(this.form.password)).get().then(function(querySnapshot) {
+                    if (querySnapshot.empty) {
+                        alert('Email or password is not valid.');
+                        _self.disableButton = false;
+                        return false;
+                    }
                     querySnapshot.forEach(function(doc) {
-                        var userInfo = doc.data();
-                        if(userInfo.online) {
-                            alert('Your account is using');
-                            return false;
+                        if(doc.exists) {
+                            var userInfo = doc.data();
+
+                            if(userInfo.status === 0) {
+                                alert('Your account is not active.');
+                                _self.disableButton = false;
+                                return false;
+                            }
+
+                            if(userInfo.online) {
+                                alert('Your account is using');
+                                _self.disableButton = false;
+                                return false;
+                            }
+                            
+                            localStorage.setItem('key', doc.id);
+                            userInfo.online = 1;
+                            usersRef.doc(doc.id).set(userInfo);
+                            _self.$router.replace('/user/chatbox');
+                        } else {
+                            alert('Email or password is not valid.');
                         }
-                        
-                        localStorage.setItem('key', doc.id);
-                        userInfo.online = 1;
-                        usersRef.doc(doc.id).set(userInfo);
-                        _self.$router.replace('/user/chatbox');
                     });
                 })
                 .catch(function(error) {
