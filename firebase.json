@@ -6,11 +6,15 @@
       "**/.*",
       "**/node_modules/**"
     ],
-    "rewrites": [
+    "rewrites": [ 
       {
-        "source": "**",
+        "source": "/api/sendmail",
+        "function": "sendmail"
+      },
+      {
+        "source": "/user",
         "destination": "/index.html"
-      }
+      } 
     ]
   }
 }

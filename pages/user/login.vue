@@ -30,8 +30,9 @@
                                 </div>
                             </div>
                             <div class="panel-footer">
-                                    <button class="btn btn-primary" type="submit" id="btnLogin" :disabled="disableButton">Login</button>
-                                    <button class="btn btn-danger" type="button" @click="this.onRegister">Register</button>
+                                <button class="btn btn-primary" type="submit" id="btnLogin" :disabled="disableButton">Login</button>
+                                <button class="btn btn-danger" type="button" @click="this.onRegister">Register</button>
+                                <button class="btn btn-danger" type="button" @click="this.onRegister1">Register without confirm</button>
                             </div>
                         </div>
                     </form>
@@ -119,6 +120,9 @@
             },
             onRegister() {
                 this.$router.replace('/user/register');
+            },
+            onRegister1() {
+                this.$router.replace('/user/register1');
             }
         }
     }

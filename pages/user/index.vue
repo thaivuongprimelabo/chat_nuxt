@@ -7,4 +7,5 @@
             this.$router.replace('/user/login');
         },
     }
+
 </script>

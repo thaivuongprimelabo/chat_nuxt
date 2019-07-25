@@ -23,7 +23,9 @@ var sendMailHtml = function(path, callback) {
 
 app.post('/', (req, res) => {
 
-    sendMailHtml('./api/email_template/confirm.html', function(err, html) {
+    var mainOptions = req.body.configMail;
+
+    sendMailHtml(mainOptions.html, function(err, html) {
         var output = {
             status: true,
             message: ''
@@ -31,7 +33,9 @@ app.post('/', (req, res) => {
 
         var template = handlebars.compile(html);
         var replacements = {
-            username: req.body.username,
+            username: req.body.form.username,
+            email: req.body.form.email,
+            password: req.body.form.password,
             confirm_link: req.body.confirm_link
         };
         var htmlToSend = template(replacements);
@@ -43,12 +47,15 @@ app.post('/', (req, res) => {
                 pass: 'nuzmgnanjfseyygs'
             }
         });
-        var mainOptions = { // thiết lập đối tượng, nội dung gửi mail
-            from: 'Administrator',
-            to: req.body.email,
-            subject: '【App】 Active mail',
-            html: htmlToSend
-        }
+        // var mainOptions = { // thiết lập đối tượng, nội dung gửi mail
+        //     from: 'Administrator',
+        //     to: req.body.email,
+        //     subject: '【App】 Active mail',
+        //     html: htmlToSend
+        // }
+
+        mainOptions.html = htmlToSend;
+        
         transporter.sendMail(mainOptions, function(err, info){
             if (err) {
                 output.status = false;

@@ -109,7 +109,6 @@
                         }
                     }
 
-                    this.form.password = $.md5(this.form.password);
                     this.form.expired_at = this.getExpired(5);
                     this.form.token = this.generateToken(64);
                     this.sendMail(this.form);
@@ -117,15 +116,24 @@
                 
                 
             },
-            async sendMail(params) {
-                // console.log(params);
+            async sendMail(form) {
                 var _self = this;
-                params.confirm_link = process.env.baseUrl + "/user/confirm?token=" + params.token;
+                var params = {
+                    form: form,
+                    configMail: {
+                        from: 'Administrator',
+                        to: form.email,
+                        subject: '【App】 Confirm email',
+                        html: './email_template/confirm.html'
+                    },
+                    confirm_link: process.env.baseUrl + "/user/confirm?token=" + form.token
+                }
+
                 var res = await this.$axios.$post('api/sendmail', params);
                 if(res.status) {
-                    delete params['confirm_link'];
-                    usersRef.add(params).then(function(docRef) {
-                        _self.$router.replace('/user/register_success');
+                    form.password = $.md5(form.password);
+                    usersRef.add(form).then(function(docRef) {
+                        _self.$router.replace('/user/register/success');
                     })
                     .catch(function(error) {
                         console.error("Error adding document: ", error);

@@ -1,9 +1,12 @@
 
-// import sendmail from './api/sendmail';
-// import test from './api/test';
+import sendmail from './api/sendmail';
+import test from './api/test';
 
 export default {
   mode: 'spa',
+  generate: {
+    dir: 'public'
+  },
   env: {
     baseUrl: process.env.BASE_URL || 'http://localhost:3000'
   },
@@ -63,12 +66,12 @@ export default {
     }
   },
   serverMiddleware: [
-    { path: '/api/sendmail', handler: '~/api/sendmail.js' },
-    { path: '/api/test', handler: '~/api/test.js' },
+    { path: '/api/sendmail', handler: sendmail },
+    { path: '/api/test', handler: test },
   ],
 
   axios: {
-    
+    baseURL: 'https://testfirebase9999.firebaseapp.com'
   },
   // srcDir: 'client/'
 }
