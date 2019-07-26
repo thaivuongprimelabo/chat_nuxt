@@ -72,7 +72,8 @@
                   status: 0,
                   online: 0,
                   token: '',
-                  expired_at: ''
+                  expired_at: '',
+                  role_id: 2
               },
               users: []
           };
@@ -113,8 +114,6 @@
                     this.form.token = this.generateToken(64);
                     this.sendMail(this.form);
                 });
-                
-                
             },
             async sendMail(form) {
                 var _self = this;

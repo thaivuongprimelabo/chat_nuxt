@@ -40,9 +40,9 @@
                                                 <col width="80%" />
                                             </colgroup>
                                             <tbody>
-                                                <tr v-for="message in messages" v-bind:key="message.created_at">
-                                                    <td><i class="glyphicon glyphicon-user"></i> {{message.name}}</td>
-								                    <td>{{message.text}}</td>
+                                                <tr v-for="msg in messages" v-bind:key="msg.created_at">
+                                                    <td><i class="glyphicon glyphicon-user"></i> {{msg.name}}</td>
+								                    <td>{{msg.text}}</td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -84,12 +84,13 @@
     
     !firebase.apps.length ? firebase.initializeApp(config) : '';
 
+    var key = localStorage.getItem('key');
     var db = firebase.firestore();
+    // var dbRealtime = firebase.database();
     var usersRef = db.collection('users')
-    var messagesRef = db.collection('messages')
-
-    
-
+    var messagesRef = db.collection('messages');
+    // var userStatusDatabaseRef = dbRealtime.ref('/status/' + key);
+    // var userStatusRef = dbRealtime.ref('/status');
 
     export default {
         middleware: 'auth',
@@ -109,9 +110,6 @@
         },
         created() {
 
-            // User login
-            var key = localStorage.getItem('key');
-
             var _self = this;
             
             messagesRef.orderBy('created_at', 'asc').onSnapshot(function(querySnapshot) {
@@ -121,33 +119,73 @@
                 });
             });
 
-            
-            usersRef.doc(key).get().then(function(doc) {
-                if (doc.exists) {
-                    _self.userInfo = doc.data();
-                    _self.message.name = _self.userInfo.username;
+            usersRef.onSnapshot(function(querySnapshot) {
+                _self.userOnline = [];
+                querySnapshot.forEach(function(doc) {
+                    var user = doc.data();
+                    if(doc.id === key) {
+                        _self.userInfo = user;
+                        return;
+                    }
 
-                    // List online
-                    usersRef.where('online', '==', 1).onSnapshot(function(querySnapshot) {
-                        _self.userOnline = [];
-                        querySnapshot.forEach(function(doc) {
-                            var userOnline = doc.data();
-                            console.log(userOnline.email, _self.userInfo.email)
-                            if(userOnline.email !== _self.userInfo.email) {
-                                _self.userOnline.push(doc.data());
-                            }
-                        });
-                    });
-                }
-            }).catch(function(error) {
-                console.log("Error getting document:", error);
+                    if(user.online && doc.id !== key) {
+                        _self.userOnline.push(user);
+                    }
+                });
             });
+
+            var isOfflineForDatabase = {
+                state: 'offline',
+            };
+
+            var isOnlineForDatabase = {
+                state: 'online',
+            };
+
+            // dbRealtime.ref('.info/connected').on('value', function(snapshot) {
+            //     if (snapshot.val() == false) {
+            //         return;
+            //     };
+
+            //     userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function() {
+            //         // The promise returned from .onDisconnect().set() will
+            //         // resolve as soon as the server acknowledges the onDisconnect() 
+            //         // request, NOT once we've actually disconnected:
+            //         // https://firebase.google.com/docs/reference/js/firebase.database.OnDisconnect
+
+            //         // We can now safely set ourselves as 'online' knowing that the
+            //         // server will mark us as offline once we lose connection.
+            //         userStatusDatabaseRef.set(isOnlineForDatabase);
+            //     });
+            // });
+
+            // userStatusRef.on('value', function(snapshot) {
+            //     var userStatus = snapshot.val();
+            //     var keys = Object.keys(userStatus);
+            //     if(keys.length) {
+            //         for(var i in keys) {
+            //             var key1 = keys[i];
+            //             var item = userStatus[key1];
+                        
+            //             if(item.state === 'online') {
+            //                 usersRef.doc(key1).update({
+            //                     online: 1
+            //                 })
+            //             } else {
+            //                 console.log('offline', (key1));
+            //                 usersRef.doc(key1).update({
+            //                     online: 0
+            //                 })
+            //             }
+            //         }
+            //     }
+            // });
         },
         methods: {
             onSend() {
+                this.message.name = this.userInfo.username;
                 this.message.created_at = new Date().getTime();
-                    messagesRef.add(this.message).then(function(docRef) {
-                })
+                messagesRef.add(this.message).then(function(docRef) {})
             },
             onLogout() {
                 var key = localStorage.getItem('key');

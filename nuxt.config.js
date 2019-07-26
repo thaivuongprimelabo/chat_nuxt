@@ -2,6 +2,8 @@
 import sendmail from './api/sendmail';
 import test from './api/test';
 
+require('dotenv').config()
+
 export default {
   mode: 'spa',
   generate: {
@@ -32,6 +34,7 @@ export default {
       { src: 'https://www.gstatic.com/firebasejs/6.3.1/firebase-app.js', type: 'text/javascript'},
       { src: 'https://www.gstatic.com/firebasejs/6.3.1/firebase-auth.js', type: 'text/javascript'},
       { src: 'https://www.gstatic.com/firebasejs/6.3.1/firebase-firestore.js', type: 'text/javascript'},
+      { src: 'https://www.gstatic.com/firebasejs/6.3.1/firebase-database.js', type: 'text/javascript'},
       { src: 'https://www.gstatic.com/firebasejs/3.1.0/firebase-storage.js', type: 'text/javascript'}
     ]
   },
@@ -71,7 +74,7 @@ export default {
   ],
 
   axios: {
-    baseURL: 'https://testfirebase9999.firebaseapp.com'
+    baseURL: process.env.API_URL || 'http://localhost:3000'
   },
   // srcDir: 'client/'
 }

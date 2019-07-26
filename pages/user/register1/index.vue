@@ -72,7 +72,8 @@
                   status: 1,
                   online: 0,
                   token: '',
-                  expired_at: ''
+                  expired_at: '',
+                  role_id: 2
               },
               users: []
           };

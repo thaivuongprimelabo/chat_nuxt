@@ -108,6 +108,7 @@
                             localStorage.setItem('key', doc.id);
                             userInfo.online = 1;
                             usersRef.doc(doc.id).set(userInfo);
+
                             _self.$router.replace('/user/chatbox');
                         } else {
                             alert('Email or password is not valid.');
