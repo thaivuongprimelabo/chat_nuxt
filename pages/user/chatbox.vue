@@ -73,24 +73,24 @@
     </div>
 </template>
 <script>
-    
+    import firebase from 'firebase';
     var config = {
         apiKey: "AIzaSyBF6T-HeFPb1cLfq-jFfIpj2So7RbwViGo",
         authDomain: "testfirebase9999.firebaseapp.com",
         projectId: "testfirebase9999",
-        // databaseURL: "https://testfirebase9999.firebaseio.com",
-        // storageBucket: "testfirebase9999.appspot.com",
+        databaseURL: "https://testfirebase9999.firebaseio.com",
+        storageBucket: "testfirebase9999.appspot.com",
     };
     
     !firebase.apps.length ? firebase.initializeApp(config) : '';
 
-    var key = localStorage.getItem('key');
+    var current_login_id = localStorage.getItem('current_login_id');
     var db = firebase.firestore();
-    // var dbRealtime = firebase.database();
+    var dbRealtime = firebase.database();
     var usersRef = db.collection('users')
     var messagesRef = db.collection('messages');
-    // var userStatusDatabaseRef = dbRealtime.ref('/status/' + key);
-    // var userStatusRef = dbRealtime.ref('/status');
+    var userStatusDatabaseRef = dbRealtime.ref('/status/' + current_login_id);
+    var userStatusRef = dbRealtime.ref('/status');
 
     export default {
         middleware: 'auth',
@@ -109,7 +109,8 @@
         mounted() {
         },
         created() {
-
+            
+            this.online();
             var _self = this;
             
             messagesRef.orderBy('created_at', 'asc').onSnapshot(function(querySnapshot) {
@@ -123,12 +124,12 @@
                 _self.userOnline = [];
                 querySnapshot.forEach(function(doc) {
                     var user = doc.data();
-                    if(doc.id === key) {
+                    if(doc.id === current_login_id) {
                         _self.userInfo = user;
                         return;
                     }
 
-                    if(user.online && doc.id !== key) {
+                    if(user.online && doc.id !== current_login_id) {
                         _self.userOnline.push(user);
                     }
                 });
@@ -142,57 +143,84 @@
                 state: 'online',
             };
 
-            // dbRealtime.ref('.info/connected').on('value', function(snapshot) {
-            //     if (snapshot.val() == false) {
-            //         return;
-            //     };
+            dbRealtime.ref('.info/connected').on('value', function(snapshot) {
+                if (snapshot.val() == false) {
+                    return;
+                };
 
-            //     userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function() {
-            //         // The promise returned from .onDisconnect().set() will
-            //         // resolve as soon as the server acknowledges the onDisconnect() 
-            //         // request, NOT once we've actually disconnected:
-            //         // https://firebase.google.com/docs/reference/js/firebase.database.OnDisconnect
+                userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function() {
+                    // The promise returned from .onDisconnect().set() will
+                    // resolve as soon as the server acknowledges the onDisconnect() 
+                    // request, NOT once we've actually disconnected:
+                    // https://firebase.google.com/docs/reference/js/firebase.database.OnDisconnect
 
-            //         // We can now safely set ourselves as 'online' knowing that the
-            //         // server will mark us as offline once we lose connection.
-            //         userStatusDatabaseRef.set(isOnlineForDatabase);
-            //     });
-            // });
+                    // We can now safely set ourselves as 'online' knowing that the
+                    // server will mark us as offline once we lose connection.
+                    userStatusDatabaseRef.set(isOnlineForDatabase);
+                });
+            });
 
-            // userStatusRef.on('value', function(snapshot) {
-            //     var userStatus = snapshot.val();
-            //     var keys = Object.keys(userStatus);
-            //     if(keys.length) {
-            //         for(var i in keys) {
-            //             var key1 = keys[i];
-            //             var item = userStatus[key1];
+            userStatusRef.on('value', function(snapshot) {
+                var userStatus = snapshot.val();
+                var keys = Object.keys(userStatus);
+                if(keys.length) {
+                    for(var i in keys) {
+                        var key1 = keys[i];
+                        var item = userStatus[key1];
                         
-            //             if(item.state === 'online') {
-            //                 usersRef.doc(key1).update({
-            //                     online: 1
-            //                 })
-            //             } else {
-            //                 console.log('offline', (key1));
-            //                 usersRef.doc(key1).update({
-            //                     online: 0
-            //                 })
-            //             }
-            //         }
-            //     }
-            // });
+                        if(item.state === 'online') {
+                            usersRef.doc(key1).update({
+                                online: 1
+                            })
+                        } else {
+                            console.log('offline', (key1));
+                            usersRef.doc(key1).update({
+                                online: 0
+                            })
+                        }
+                    }
+                }
+            });
         },
         methods: {
-            onSend() {
+            async online() {
+                await this.$axios.$post('/updateOnline', {id: current_login_id, online: 1});
+            },
+            async offline() {
+                await this.$axios.$post('/updateOnline', {id: current_login_id, online: 0});
+            },
+            async getUserInfo() {
+                var res = await this.$axios.$post('/getUserInfo', {current_login_id: current_login_id});
+                if(res.status) {
+                    this.userInfo = res.data;
+                }
+            },
+            async getUsersOnline() {
+                var res = await this.$axios.$post('/getUsersOnline', {current_login_id: current_login_id});
+                if(res.status) {
+                    this.userOnline = res.data;
+                }
+            },
+            async getMessages() {
+                var res = await this.$axios.$post('/getMessages', {});
+                if(res.status) {
+                    this.messages = res.data;
+                }
+            },
+            async onSend() {
                 this.message.name = this.userInfo.username;
                 this.message.created_at = new Date().getTime();
-                messagesRef.add(this.message).then(function(docRef) {})
+                var res = await this.$axios.$post('/addMessage', {message: this.message});
+                if(res.status) {
+                    this.messages.push(this.message);
+                }
             },
-            onLogout() {
-                var key = localStorage.getItem('key');
-                this.userInfo.online = 0;
-                usersRef.doc(key).set(this.userInfo);
-                localStorage.removeItem('key');
-                this.$router.replace('/user/login');
+            async onLogout() {
+                var res = await this.$axios.$post('/updateOnline', {id: current_login_id, online: 0});
+                if(res.status) {
+                    localStorage.removeItem('current_login_id');
+                    this.$router.replace('/user/login');
+                }
             }
         }
     }

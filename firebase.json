@@ -8,8 +8,24 @@
     ],
     "rewrites": [ 
       {
-        "source": "/api/sendmail",
-        "function": "sendmail"
+        "source": "/api/login",
+        "function": "login"
+      },
+      {
+        "source": "/api/updateOnline",
+        "function": "updateOnline"
+      },
+      {
+        "source": "/api/register",
+        "function": "register"
+      },
+      {
+        "source": "/api/confirmRegister",
+        "function": "confirmRegister"
+      },
+      {
+        "source": "/api/addMessage",
+        "function": "addMessage"
       },
       {
         "source": "/user",

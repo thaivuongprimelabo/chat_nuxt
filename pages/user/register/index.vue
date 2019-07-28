@@ -4,6 +4,7 @@
           <div class="col-md-6 col-md-offset-3">
             <div class="row">
               <div class="col-md-12">
+                <Alert v-bind:error="error" v-bind:success="success"></Alert>
                 <form id="submitForm" @submit.prevent="onRegister">
                   <div class="panel panel-primary">
                     <div class="panel-heading">
@@ -47,21 +48,11 @@
     </div>
 </template>
 <script>
-    var config = {
-        apiKey: "AIzaSyBF6T-HeFPb1cLfq-jFfIpj2So7RbwViGo",
-        authDomain: "testfirebase9999.firebaseapp.com",
-        projectId: "testfirebase9999",
-        // databaseURL: "https://testfirebase9999.firebaseio.com",
-        // storageBucket: "testfirebase9999.appspot.com",
-    };
-    
-    !firebase.apps.length ? firebase.initializeApp(config) : '';
-
-    var db = firebase.firestore();
-
-    var usersRef = db.collection('users')
-
+    import Alert from '../../../components/Alert';
     export default {
+        components: {
+            Alert
+        },
         data: function() {
           return {
               disableButton: false,
@@ -75,7 +66,9 @@
                   expired_at: '',
                   role_id: 2
               },
-              users: []
+              users: [],
+              error: '',
+              success: ''
           };
         },
         mounted() {
@@ -87,57 +80,27 @@
             onBack() {
                 this.$router.replace('/user/login');
             },
-            onRegister() {
+            async onRegister() {
                 this.disableButton = true;
-
-                usersRef.get().then((querySnapshot) => {
-                    querySnapshot.forEach((doc) => {
-                        this.users.push(doc.data());
-                    });
-
-                    for(var i in this.users) {
-                        var userInfo = this.users[i];
-                        if(userInfo.username === this.form.username) {
-                            alert('Your username is exists. Please choose another one.');
-                            this.disableButton = false;
-                            return false;
-                        }
-
-                        if(userInfo.email === this.form.email) {
-                            alert('Your email is exists. Please choose another one.');
-                            this.disableButton = false;
-                            return false;
-                        }
-                    }
-
-                    this.form.expired_at = this.getExpired(5);
-                    this.form.token = this.generateToken(64);
-                    this.sendMail(this.form);
-                });
-            },
-            async sendMail(form) {
-                var _self = this;
+                this.form.expired_at = this.getExpired(5);
+                this.form.token = this.generateToken(64);
                 var params = {
-                    form: form,
+                    form: this.form,
                     configMail: {
                         from: 'Administrator',
-                        to: form.email,
+                        to: this.form.email,
                         subject: '【App】 Confirm email',
                         html: './email_template/confirm.html'
                     },
-                    confirm_link: process.env.baseUrl + "/user/confirm?token=" + form.token
+                    confirm_link: process.env.baseUrl + "/user/confirm?token=" + this.form.token
                 }
-
-                var res = await this.$axios.$post('api/sendmail', params);
+                var res = await this.$axios.$post('/register', params);
                 if(res.status) {
-                    form.password = $.md5(form.password);
-                    usersRef.add(form).then(function(docRef) {
-                        _self.$router.replace('/user/register/success');
-                    })
-                    .catch(function(error) {
-                        console.error("Error adding document: ", error);
-                    });
+                    this.$router.replace('/user/register/success');
+                } else {
+                    this.error = res.error;
                 }
+                this.disableButton = false;
             },
             generateToken(length) {
                 var text = "";

@@ -5,6 +5,7 @@
           <div class="col-md-6 col-md-offset-3">
             <div class="row">
               <div class="col-md-12">
+                    <Alert v-bind:error="error" v-bind:success="success"></Alert>
                     <form id="submitForm" @submit.prevent="onLogin">
                         <div class="panel panel-primary">
                             <div class="panel-heading">
@@ -43,21 +44,11 @@
     </div>
 </template>
 <script>
-    
-    var config = {
-        apiKey: "AIzaSyBF6T-HeFPb1cLfq-jFfIpj2So7RbwViGo",
-        authDomain: "testfirebase9999.firebaseapp.com",
-        projectId: "testfirebase9999",
-        // databaseURL: "https://testfirebase9999.firebaseio.com",
-        // storageBucket: "testfirebase9999.appspot.com",
-    };
-    
-    !firebase.apps.length ? firebase.initializeApp(config) : '';
-
-    var db = firebase.firestore();
-    var usersRef = db.collection('users')
-
+    import Alert from '../../components/Alert';
     export default {
+        components: {
+            Alert
+        },
         data: function() {
           return {
               disableButton: false,
@@ -65,59 +56,34 @@
                   email: '',
                   password: ''
               },
-              userList: []
+              userList: [],
+              error: '',
+              success: ''
           };
         },
         mounted() {
-            console.log('mounted');
         },
         created() {
             var _self = this;
-            usersRef.get().then((querySnapshot) => {
-                querySnapshot.forEach((doc) => {
-                    _self.userList.push(doc.data());
-                });
-            });
         },
         methods: {
-            onLogin() {
+            async onLogin() {
                 this.disableButton = true;
-                var _self = this;
-                usersRef.where("email", "==", this.form.email).where("password", "==", $.md5(this.form.password)).get().then(function(querySnapshot) {
-                    if (querySnapshot.empty) {
-                        alert('Email or password is not valid.');
-                        _self.disableButton = false;
-                        return false;
-                    }
-                    querySnapshot.forEach(function(doc) {
-                        if(doc.exists) {
-                            var userInfo = doc.data();
 
-                            if(userInfo.status === 0) {
-                                alert('Your account is not active.');
-                                _self.disableButton = false;
-                                return false;
-                            }
+                var params = {
+                    form: this.form
+                }
 
-                            if(userInfo.online) {
-                                alert('Your account is using');
-                                _self.disableButton = false;
-                                return false;
-                            }
-                            
-                            localStorage.setItem('key', doc.id);
-                            userInfo.online = 1;
-                            usersRef.doc(doc.id).set(userInfo);
-
-                            _self.$router.replace('/user/chatbox');
-                        } else {
-                            alert('Email or password is not valid.');
-                        }
-                    });
-                })
-                .catch(function(error) {
-                    console.log("Error getting documents: ", error);
-                });
+                var res = await this.$axios.$post('/login', params);
+                if(res.status) {
+                    var userInfo = res.data[0];
+                    this.success = res.success;
+                    this.$router.replace('/user/chatbox');
+                    localStorage.setItem('current_login_id', userInfo.id);
+                } else {
+                    this.error = res.error;
+                }
+                this.disableButton = false;
             },
             onRegister() {
                 this.$router.replace('/user/register');

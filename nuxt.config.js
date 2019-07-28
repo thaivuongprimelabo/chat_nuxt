@@ -1,6 +1,13 @@
 
 import sendmail from './api/sendmail';
-import test from './api/test';
+import login from './api/login';
+import updateOnline from './api/updateOnline';
+import confirmRegister from './api/confirmRegister';
+import register from './api/register';
+import getUserInfo from './api/getUserInfo';
+import getUsersOnline from './api/getUsersOnline';
+import getMessages from './api/getMessages';
+import addMessage from './api/addMessage';
 
 require('dotenv').config()
 
@@ -10,7 +17,8 @@ export default {
     dir: 'public'
   },
   env: {
-    baseUrl: process.env.BASE_URL || 'http://localhost:3000'
+    //baseUrl: process.env.BASE_URL || 'http://localhost:3000'
+    baseUrl: 'https://testfirebase9999.firebaseapp.com'
   },
   /*
   ** Headers of the page
@@ -30,12 +38,13 @@ export default {
     ],
     script: [
       { src: 'https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js', type: 'text/javascript'},
+      // { src: 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js', type: 'text/javascript'},
       { src: '/jquery.md5.js', type: 'text/javascript'},
-      { src: 'https://www.gstatic.com/firebasejs/6.3.1/firebase-app.js', type: 'text/javascript'},
-      { src: 'https://www.gstatic.com/firebasejs/6.3.1/firebase-auth.js', type: 'text/javascript'},
-      { src: 'https://www.gstatic.com/firebasejs/6.3.1/firebase-firestore.js', type: 'text/javascript'},
-      { src: 'https://www.gstatic.com/firebasejs/6.3.1/firebase-database.js', type: 'text/javascript'},
-      { src: 'https://www.gstatic.com/firebasejs/3.1.0/firebase-storage.js', type: 'text/javascript'}
+      // { src: 'https://www.gstatic.com/firebasejs/6.3.1/firebase-app.js', type: 'text/javascript'},
+      // { src: 'https://www.gstatic.com/firebasejs/6.3.1/firebase-auth.js', type: 'text/javascript'},
+      // { src: 'https://www.gstatic.com/firebasejs/6.3.1/firebase-firestore.js', type: 'text/javascript'},
+      // { src: 'https://www.gstatic.com/firebasejs/6.3.1/firebase-database.js', type: 'text/javascript'},
+      // { src: 'https://www.gstatic.com/firebasejs/3.1.0/firebase-storage.js', type: 'text/javascript'}
     ]
   },
   /*
@@ -69,12 +78,21 @@ export default {
     }
   },
   serverMiddleware: [
-    { path: '/api/sendmail', handler: sendmail },
-    { path: '/api/test', handler: test },
+    // { path: '/api/sendmail', handler: sendmail },
+    { path: '/api/login', handler: login },
+    { path: '/api/updateOnline', handler: updateOnline },
+    { path: '/api/register', handler: register },
+    { path: '/api/confirmRegister', handler: confirmRegister },
+    // { path: '/api/getUserInfo', handler: getUserInfo },
+    // { path: '/api/getUsersOnline', handler: getUsersOnline },
+    // { path: '/api/getMessages', handler: getMessages },
+    { path: '/api/addMessage', handler: addMessage }
   ],
 
   axios: {
-    baseURL: process.env.API_URL || 'http://localhost:3000'
+    baseURL: 'https://testfirebase9999.firebaseapp.com/api'
+    // baseURL: 'http://localhost:5000/testfirebase9999/us-central1/api'
+    // baseURL: 'http://localhost:3000/api'
   },
   // srcDir: 'client/'
 }
