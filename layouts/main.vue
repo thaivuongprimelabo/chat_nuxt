@@ -18,7 +18,8 @@
     </div>
 </template>
 <script>
-    var current_login_id = localStorage.getItem('current_login_id');
+    import { mapMutations } from 'vuex';
+
     export default {
         data: function() {
           return {
@@ -34,21 +35,27 @@
                       path: "/user/contacts",
                       name: "Contacts"
                   }
-              ]
+              ],
+              current_login_id: null
           };
         },
+        mounted() {
+
+        },
         created() {
+            this.current_login_id = localStorage.getItem('current_login_id');
             this.getUserInfo();
         },
         methods: {
             async getUserInfo() {
-                var res = await this.$axios.$post('/getUserInfo', {current_login_id: current_login_id});
+                var res = await this.$axios.$post('/getUserInfo', {current_login_id: this.current_login_id});
                 if(res.status) {
                     this.userInfo = res.data;
+                    this.$store.commit('userInfo/add', this.userInfo);
                 }
             },
             async onLogout() {
-                var res = await this.$axios.$post('/updateOnline', {id: current_login_id, online: 0});
+                var res = await this.$axios.$post('/updateOnline', {id: this.current_login_id, online: 0});
                 if(res.status) {
                     localStorage.removeItem('current_login_id');
                     this.$router.replace('/user/login');

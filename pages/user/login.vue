@@ -79,8 +79,8 @@
                     var userInfo = res.data[0];
                     this.error = '';
                     this.success = res.success;
-                    this.$router.replace('/user/chatbox');
                     localStorage.setItem('current_login_id', userInfo.id);
+                    this.$router.replace('/user/chatbox');
                 } else {
                     this.success = '';
                     this.error = res.error;

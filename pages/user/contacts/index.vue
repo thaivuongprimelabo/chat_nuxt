@@ -1,78 +1,57 @@
 
 <template>
-    <Contacts>
+    <div class="container">
         <div class="row">
-            <div class="col-md-12">
-                <Alert v-bind:error="error" v-bind:success="success"></Alert>
-                <form id="submitForm" @submit.prevent="onSend">
-                    <div class="panel panel-primary">
-                        <div class="panel-heading">
-                        <i class="glyphicon glyphicon-envelope"></i>
-                        <h6 class="panel-title">Send contact</h6>
-                        </div>
-                        <div class="panel-body">
-                            <div class="row">
-                                <div class="col-sm-12">
-                                    <div class="form-group">
-                                        <label>To</label>
-                                        <div class="input-group">
-                                            <span class="input-group-addon"><i class="glyphicon glyphicon-envelope"></i></span>
-                                            <input type="email" class="form-control" placeholder="Please input email" v-model="contact.to" disabled />
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Subject</label>
-                                        <div class="input-group">
-                                            <span class="input-group-addon"><i class="glyphicon glyphicon-pencil"></i></span>
-                                            <input type="text" class="form-control" placeholder="Please input subject" v-model="contact.subject" required />
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Content</label>
-                                        <div class="input-group">
-                                            <span class="input-group-addon"><i class="glyphicon glyphicon-pencil"></i></span>
-                                            <textarea  class="form-control" placeholder="Please input subject" rows="15" v-model="contact.content" required ></textarea>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="panel-footer">
-                            <button class="btn btn-primary" type="submit" id="btnSend">Send</button>
-                            <button class="btn btn-default" type="button" id="btnClear" @click="onClear">Clear</button>
-                        </div>
-                    </div>
-                </form>
+          <div class="col-md-12">
+            <div class="row">
+                <Sidebar></Sidebar>
+                <SendContact></SendContact>
             </div>
+          </div>
         </div>
-    </Contacts>
+    </div>
 </template>
 <script>
-    import Alert from '../../../components/Alert.vue';
+    import Sidebar from '../../../components/Sidebar.vue';
+    import SendContact from '../../../components/SendContact.vue';
     import firebase from 'firebase';
-    import Contacts from '../../../components/Contacts.vue';
     import { setTimeout } from 'timers';
-
-    var current_login_id = localStorage.getItem('current_login_id');
 
     export default {
         layout: 'main',
         middleware: 'auth',
         components: {
-            Alert,
-            Contacts
+            SendContact,
+            Sidebar
         },
         data: function() {
           return {
-              contact: {
-                  receive_id: 0,
-                  subject: '',
-                  to: '',
-                  content: '',
-                  created_at: ''
-              },
-              error: '',
-              success: ''
+                functions: [
+                    {
+                        id: 1,
+                        path: '/user/contacts/inbox',
+                        name: 'Inbox'
+                    },
+                    {
+                        id: 2,
+                        path: '/user/contacts/sent',
+                        name: 'Sent'
+                    }
+                ],
+                contact: {
+                    from_id: '',
+                    from_email: '',
+                    to_id: '',
+                    to_email: '',
+                    subject: '',
+                    content: '',
+                    created_at: ''
+                },
+                error: '',
+                success: '',
+                users: [],
+                userInfo: {},
+                userSelect: {}
           };
         },
         mounted() {
@@ -80,6 +59,8 @@
         created() {
 
             var _self = this;
+
+            _self.getUsers();
         },
         methods: {
             async onSend() {
@@ -107,6 +88,15 @@
             onClear() {
                 this.contact.subject = '';
                 this.contact.content = '';
+            },
+            async getUsers() {
+                var res = await this.$axios.$post('/getUsers', {});
+                if(res.status) {
+                    this.users = res.data;
+                }
+            },
+            onClickUser(user) {
+                this.$refs.send_contact.updateSendContact(user);
             }
         }
     }

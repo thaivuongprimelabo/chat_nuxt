@@ -28,7 +28,7 @@
                     </div>
                 </div>
                 <div class="col-md-9">
-                    <slot userSelect="userSelect"></slot>
+                    <slot :userSelect="userSelect"></slot>
                 </div>
             </div>
           </div>
@@ -63,19 +63,12 @@
         },
         created() {
             this.getUsers();
-            this.getUserInfo();
         },
         methods: {
             async getUsers() {
                 var res = await this.$axios.$post('/getUsers', {});
                 if(res.status) {
                     this.users = res.data;
-                }
-            },
-            async getUserInfo() {
-                var res = await this.$axios.$post('/getUserInfo', {current_login_id: current_login_id});
-                if(res.status) {
-                    this.userInfo = res.data;
                 }
             },
             onClickUser(user) {
