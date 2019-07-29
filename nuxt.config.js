@@ -7,7 +7,10 @@ import register from './api/register';
 import getUserInfo from './api/getUserInfo';
 import getUsersOnline from './api/getUsersOnline';
 import getMessages from './api/getMessages';
+import getUsers from './api/getUsers';
 import addMessage from './api/addMessage';
+import addContact from './api/addContact';
+import getSentContacts from './api/getSentContacts';
 
 require('dotenv').config()
 
@@ -17,8 +20,8 @@ export default {
     dir: 'public'
   },
   env: {
-    //baseUrl: process.env.BASE_URL || 'http://localhost:3000'
-    baseUrl: 'https://testfirebase9999.firebaseapp.com'
+    baseUrl: process.env.BASE_URL || 'http://localhost:3000'
+    // baseUrl: 'https://testfirebase9999.firebaseapp.com'
   },
   /*
   ** Headers of the page
@@ -83,16 +86,19 @@ export default {
     { path: '/api/updateOnline', handler: updateOnline },
     { path: '/api/register', handler: register },
     { path: '/api/confirmRegister', handler: confirmRegister },
-    // { path: '/api/getUserInfo', handler: getUserInfo },
-    // { path: '/api/getUsersOnline', handler: getUsersOnline },
+    { path: '/api/getUserInfo', handler: getUserInfo },
+    { path: '/api/getUsersOnline', handler: getUsersOnline },
     // { path: '/api/getMessages', handler: getMessages },
+    { path: '/api/getSentContacts', handler: getSentContacts},
+    { path: '/api/addContact', handler: addContact},
+    { path: '/api/getUsers', handler: getUsers},
     { path: '/api/addMessage', handler: addMessage }
   ],
 
   axios: {
-    baseURL: 'https://testfirebase9999.firebaseapp.com/api'
+    // baseURL: 'https://testfirebase9999.firebaseapp.com/api'
     // baseURL: 'http://localhost:5000/testfirebase9999/us-central1/api'
-    // baseURL: 'http://localhost:3000/api'
+    baseURL: 'http://localhost:3000/api'
   },
   // srcDir: 'client/'
 }

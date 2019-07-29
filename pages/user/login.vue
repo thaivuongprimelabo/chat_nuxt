@@ -3,7 +3,7 @@
     <div class="container">
         <div class="row">
           <div class="col-md-6 col-md-offset-3">
-            <div class="row">
+            <div class="row" id="loginForm">
               <div class="col-md-12">
                     <Alert v-bind:error="error" v-bind:success="success"></Alert>
                     <form id="submitForm" @submit.prevent="onLogin">
@@ -77,10 +77,12 @@
                 var res = await this.$axios.$post('/login', params);
                 if(res.status) {
                     var userInfo = res.data[0];
+                    this.error = '';
                     this.success = res.success;
                     this.$router.replace('/user/chatbox');
                     localStorage.setItem('current_login_id', userInfo.id);
                 } else {
+                    this.success = '';
                     this.error = res.error;
                 }
                 this.disableButton = false;
@@ -95,4 +97,7 @@
     }
 </script>
 <style>
+#loginForm {
+    margin-top: 150px;
+}
 </style>

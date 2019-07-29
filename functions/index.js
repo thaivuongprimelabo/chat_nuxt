@@ -27,3 +27,15 @@ exports.confirmRegister = functions.https.onRequest((req, res) => {
 exports.addMessage = functions.https.onRequest((req, res) => {
     api.addMessage(req, res);
 });
+
+exports.getUsersOnline = functions.https.onRequest((req, res) => {
+    api.getUsersOnline(req, res);
+});
+
+exports.getUserInfo = functions.https.onRequest((req, res) => {
+    api.getUserInfo(req, res);
+});
+
+exports.getUsers = functions.https.onRequest((req, res) => {
+    api.getUsers(req, res);
+});

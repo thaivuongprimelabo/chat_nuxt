@@ -28,6 +28,18 @@
         "function": "addMessage"
       },
       {
+        "source": "/api/getUserInfo",
+        "function": "getUserInfo"
+      },
+      {
+        "source": "/api/getUsersOnline",
+        "function": "getUsersOnline"
+      },
+      {
+        "source": "/api/getUsers",
+        "function": "getUsers"
+      },
+      {
         "source": "/user",
         "destination": "/index.html"
       } 

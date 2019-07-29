@@ -15,9 +15,6 @@
                                 <li class="list-group-item" v-for="user in userOnline" v-bind:key="user.email">{{ user.username }}</li>
                             </ul>
                         </div>
-                        <div class="panel-footer">
-                            <button class="btn btn-danger" id="btnLogout" @click="this.onLogout">Log out</button>
-                        </div>
                     </div>
                 </div>
                 <div class="col-md-9">
@@ -27,40 +24,37 @@
                                 <div class="panel-heading">
                                 <i class="glyphicon glyphicon-user"></i>
                                 <h6 class="panel-title">Chat box</h6>
-                                <div class="btn-group btn-group-xs pull-right">
-                                    Hello, <span id="txtName">{{ userInfo.username }}</span>
-                                </div>
                                 </div>
                                 <div class="panel-body">
-                                <div class="row">
-                                    <div class="col-sm-12 scollDiv" id="scollDiv">
-                                        <table class="table table-hover" id="messageContainer">
-                                            <colgroup>
-                                                <col width="20%" />
-                                                <col width="80%" />
-                                            </colgroup>
-                                            <tbody>
-                                                <tr v-for="msg in messages" v-bind:key="msg.created_at">
-                                                    <td><i class="glyphicon glyphicon-user"></i> {{msg.name}}</td>
-								                    <td>{{msg.text}}</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
+                                    <div class="row">
+                                        <div class="col-sm-12 scollDiv" id="scollDiv">
+                                            <table class="table table-hover" id="messageContainer">
+                                                <colgroup>
+                                                    <col width="20%" />
+                                                    <col width="80%" />
+                                                </colgroup>
+                                                <tbody>
+                                                    <tr v-for="msg in messages" v-bind:key="msg.created_at">
+                                                        <td><i class="glyphicon glyphicon-user"></i> {{msg.name}}</td>
+                                                        <td>{{msg.text}}</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
-                                </div>
                                 </div>
                                 <div class="panel-footer">
-                                <form>
-                                    <div class="input-group input-group-sm">
-                                    <span class="input-group-addon">
-                                        <i class="glyphicon glyphicon-pencil"></i>
-                                    </span>
-                                    <input type="text" class="form-control" id="txtText" v-model="message.text" placeholder="Type your message here ..">
-                                    <span class="input-group-btn">
-                                        <button class="btn btn-primary" type="button" id="btnSend" @click="this.onSend">Send</button>
-                                    </span>
-                                    </div>
-                                </form>
+                                    <form>
+                                        <div class="input-group input-group-sm">
+                                        <span class="input-group-addon">
+                                            <i class="glyphicon glyphicon-pencil"></i>
+                                        </span>
+                                        <input type="text" class="form-control" id="txtText" v-model="message.text" placeholder="Type your message here ..">
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-primary" type="button" id="btnSend" @click="this.onSend">Send</button>
+                                        </span>
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -93,6 +87,7 @@
     var userStatusRef = dbRealtime.ref('/status');
 
     export default {
+        layout: 'main',
         middleware: 'auth',
         data: function() {
           return {
@@ -103,15 +98,18 @@
               },
               userOnline: [],
               messages: [],
-              userInfo: {}
+              userInfo: {},
+              groups: []
           };
         },
         mounted() {
         },
         created() {
             
-            this.online();
+            // this.online();
             var _self = this;
+
+            _self.getUserInfo();
             
             messagesRef.orderBy('created_at', 'asc').onSnapshot(function(querySnapshot) {
                 _self.messages = [];
@@ -120,20 +118,20 @@
                 });
             });
 
-            usersRef.onSnapshot(function(querySnapshot) {
-                _self.userOnline = [];
-                querySnapshot.forEach(function(doc) {
-                    var user = doc.data();
-                    if(doc.id === current_login_id) {
-                        _self.userInfo = user;
-                        return;
-                    }
+            // usersRef.onSnapshot(function(querySnapshot) {
+            //     _self.userOnline = [];
+            //     querySnapshot.forEach(function(doc) {
+            //         var user = doc.data();
+            //         if(doc.id === current_login_id) {
+            //             _self.userInfo = user;
+            //             return;
+            //         }
 
-                    if(user.online && doc.id !== current_login_id) {
-                        _self.userOnline.push(user);
-                    }
-                });
-            });
+            //         if(user.online && doc.id !== current_login_id) {
+            //             _self.userOnline.push(user);
+            //         }
+            //     });
+            // });
 
             var isOfflineForDatabase = {
                 state: 'offline',
@@ -164,21 +162,17 @@
                 var userStatus = snapshot.val();
                 var keys = Object.keys(userStatus);
                 if(keys.length) {
+                    var user_online_list = [];
                     for(var i in keys) {
-                        var key1 = keys[i];
-                        var item = userStatus[key1];
+                        var user_id = keys[i];
+                        var user_online = userStatus[user_id];
                         
-                        if(item.state === 'online') {
-                            usersRef.doc(key1).update({
-                                online: 1
-                            })
-                        } else {
-                            console.log('offline', (key1));
-                            usersRef.doc(key1).update({
-                                online: 0
-                            })
+                        if(user_online.state === 'online' && user_id !== current_login_id) {
+                            
+                            user_online_list.push(user_id);
                         }
                     }
+                    _self.getUsersOnline(user_online_list);
                 }
             });
         },
@@ -195,11 +189,16 @@
                     this.userInfo = res.data;
                 }
             },
-            async getUsersOnline() {
-                var res = await this.$axios.$post('/getUsersOnline', {current_login_id: current_login_id});
-                if(res.status) {
-                    this.userOnline = res.data;
+            async getUsersOnline(user_online_list) {
+                if(user_online_list.length) {
+                    var res = await this.$axios.$post('/getUsersOnline', {user_online_list: user_online_list});
+                    if(res.status) {
+                        this.userOnline = res.data;
+                    }
+                } else {
+                    this.userOnline = [];
                 }
+                
             },
             async getMessages() {
                 var res = await this.$axios.$post('/getMessages', {});
@@ -221,6 +220,9 @@
                     localStorage.removeItem('current_login_id');
                     this.$router.replace('/user/login');
                 }
+            },
+            onBack() {
+                this.$router.replace('/user/dashboard');
             }
         }
     }

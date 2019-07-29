@@ -13,6 +13,7 @@ if (!firebase.apps.length) {
 var db = firebase.firestore();
 var usersRef = db.collection('users');
 var messagesRef = db.collection('messages');
+var contactsRef = db.collection('contacts');
 
 exports.onLogin = function(req, res) {
     var output = {
@@ -137,38 +138,58 @@ exports.onConfirmRegister = function(req, res) {
     
 }
 
-// exports.getUsersOnline = function(req, res) {
-//     var output = {
-//         status: true,
-//         data: []
-//     }
+exports.getUsersOnline = function(req, res) {
+    var output = {
+        status: true,
+        data: []
+    }
 
-//     var current_login_id = req.body.current_login_id;
+    var user_online_list = req.body.user_online_list;
 
-//     usersRef.where('online', '==', 1).get().then(function(querySnapshot) {
-//         querySnapshot.forEach((doc) => {
-//             if(doc.id !== current_login_id) {
-//                 var user = doc.data();
-//                 output.data.push(user);
-//             }
-//         });
-//         return res.status(200).json(output);
-//     });
-// }
+    usersRef.get().then(function(querySnapshot) {
+        querySnapshot.forEach((doc) => {
+            for(var i in user_online_list) {
+                var user_online_id = user_online_list[i];
+                if(user_online_id === doc.id) {
+                    output.data.push(doc.data());
+                }
+            }
+        });
+        return res.status(200).json(output);
+    });
+}
 
-// exports.getUserInfo = function(req, res) {
-//     var output = {
-//         status: true,
-//         data: {}
-//     }
+exports.getUserInfo = function(req, res) {
+    var output = {
+        status: true,
+        data: {}
+    }
 
-//     var current_login_id = req.body.current_login_id;
+    var current_login_id = req.body.current_login_id;
 
-//     usersRef.doc(current_login_id).get().then(function(doc) {
-//         output.data = doc.data();
-//         return res.status(200).json(output);
-//     });
-// }
+    usersRef.doc(current_login_id).get().then(function(doc) {
+        output.data = doc.data();
+        return res.status(200).json(output);
+    });
+}
+
+exports.getUsers = function(req, res) {
+    var output = {
+        status: true,
+        data: []
+    }
+
+    usersRef.get().then(function(querySnapshot) {
+        querySnapshot.forEach((doc) => {
+            var user = doc.data();
+            if(user.status) {
+                user.id = doc.id;
+                output.data.push(user);
+            }
+        });
+        return res.status(200).json(output);
+    });
+}
 
 // exports.getMessages = function(req, res) {
 //     var output = {
@@ -184,6 +205,39 @@ exports.onConfirmRegister = function(req, res) {
 //         return res.status(200).json(output);
 //     });
 // }
+
+exports.getSentContacts = function(req, res) {
+    var output = {
+        status: true,
+        data: []
+    }
+
+    var current_login_id = req.body.current_login_id;
+
+    contactsRef.where('receive_id', '==', current_login_id).get().then(function(querySnapshot) {
+        if(querySnapshot.empty) {
+            return res.status(200).json(output);
+            return;
+        }
+
+        querySnapshot.forEach((doc) => {
+            var contact = doc.data();
+            output.data.push(contact);
+        });
+        return res.status(200).json(output);
+    });
+}
+
+exports.addContact = function(req, res) {
+    var output = {
+        status: true,
+        data: []
+    }
+    
+    var contact = req.body.contact;
+    contactsRef.add(contact).then(function() {});
+    return res.status(200).json(output);
+}
 
 exports.addMessage = function(req, res) {
     var output = {
