@@ -228,7 +228,11 @@ exports.getSentContacts = function(req, res) {
         querySnapshot.forEach((doc) => {
             var contact = doc.data();
             contact.id = doc.id;
-            output.data.push(contact);
+            usersRef.doc(contact.to_id).then(function(snapshot) {
+                contact.to_email = snapshot.data().email;
+                contact.to_name = snapshot.data().username;
+                output.data.push(contact);
+            });
         });
         return res.status(200).json(output);
     });

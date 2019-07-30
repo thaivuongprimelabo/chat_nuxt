@@ -1,25 +1,27 @@
 <template>
     <div class="col-md-3">
-        <div class="panel panel-primary">
+        <div class="panel panel-primary" v-if="this.$nuxt.$route.name === 'user-chatbox'">
             <div class="panel-heading">
                 <i class="glyphicon glyphicon-user"></i>
-                <h6 class="panel-title">Menu</h6>
+                <h6 class="panel-title">Online list</h6>
             </div>
             <div class="panel-body">
                 <ul id="listOnline" class="list-group">
-                    <li class="list-group-item" v-for="fs in functions" v-bind:key="fs.id"><a href="javascript:void(0)" @click="onClickMenu(fs.path)">{{ fs.name }} ({{ fs.count }})</a><span class="badge badge-danger" v-show="fs.new_contact">{{ fs.new_contact }}</span></li>
+                    <li class="list-group-item" v-for="user in userOnline" v-bind:key="user.email">{{ user.username }}</li>
                 </ul>
             </div>
         </div>
-        <div class="panel panel-primary">
-            <div class="panel-heading">
-                <i class="glyphicon glyphicon-user"></i>
-                <h6 class="panel-title">User list</h6>
-            </div>
-            <div class="panel-body">
-                <ul id="listOnline" class="list-group">
-                    <li v-bind:class="[ur.selected ? 'list-group-item select-user': 'list-group-item']"  v-for="(ur, index) in users" v-bind:key="index"><a href="javascript:void(0)" @click="onClickUser(index)"> {{ ur.username }}<br/>({{ ur.email }})</a></li>
-                </ul>
+        <div v-else>
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <i class="glyphicon glyphicon-user"></i>
+                    <h6 class="panel-title">Menu</h6>
+                </div>
+                <div class="panel-body">
+                    <ul id="listOnline" class="list-group">
+                        <li class="list-group-item" v-for="fs in functions" v-bind:key="fs.id"><a href="javascript:void(0)" @click="onClickMenu(fs.path)">{{ fs.name }} ({{ fs.count }})</a><span class="badge badge-danger" v-show="fs.new_contact">{{ fs.new_contact }}</span></li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
@@ -44,20 +46,24 @@
                         count: 0
                     }
                 ],
-                users: [],
-                userSelect: {},
-                isActive: false
+                userSelect: {}
             }
         },
         computed: {
             sentCount() {
-                this.functions[1].count = this.$store.state.contacts.sent.length;
+                return this.$store.state.contacts.sent !== undefined ? this.$store.state.contacts.sent.length : 0;
             },
             inboxCount() {
-                this.functions[0].count = this.$store.state.contacts.inbox.length;
+                return this.$store.state.contacts.inbox !== undefined ? this.$store.state.contacts.inbox.length : 0;
             },
             newContactCount() {
-                this.functions[0].new_contact = this.$store.state.contacts.new_contact.length;
+                return this.$store.state.contacts.new_contact !== undefined ? this.$store.state.contacts.new_contact.length : 0;
+            },
+            userOnline() {
+                return this.$store.state.userOnline.data;
+            },
+            users() {
+                return this.$store.state.users.data
             }   
         },
         watch: {
@@ -69,25 +75,30 @@
             },
             newContactCount(newValue, oldValue) {
                 this.functions[0].new_contact = newValue;
+            },
+            userOnline(newValue, oldValue) {
+                return newValue;
+            },
+            users(newValue, oldValue) {
+                return newValue;
             }
         },
         mounted() {
         },
         created() {
-            
         },
         created() {
             var _self = this;
             var current_login_id = localStorage.getItem('current_login_id');
-            _self.getUsers(current_login_id);
+            // _self.getUsers(current_login_id);
         },
         methods: {
-            async getUsers(current_login_id) {
-                var res = await this.$axios.$post('/getUsers', {current_login_id: current_login_id});
-                if(res.status) {
-                    this.users = res.data;
-                }
-            },
+            // async getUsers(current_login_id) {
+            //     var res = await this.$axios.$post('/getUsers', {current_login_id: current_login_id});
+            //     if(res.status) {
+            //         this.users = res.data;
+            //     }
+            // },
             onClickUser(index) {
                 var selected = !this.users[index].selected;
                 this.users[index].selected = selected;

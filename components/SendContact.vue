@@ -1,42 +1,49 @@
 <template>
-    <div class="col-md-9">
+    <div id="send_contact" class="col-md-6">
         <div class="row">
             <div class="col-md-12">
-                <form id="submitForm" @submit.prevent="onSend">
+                <form id="submitForm" @submit.prevent="onSend" v-show="showSendForm">
                     <div class="panel panel-primary">
                         <div class="panel-heading">
-                        <i class="glyphicon glyphicon-envelope"></i>
-                        <h6 class="panel-title">Send contact</h6>
+                            <i class="glyphicon glyphicon-envelope"></i>
+                            <h6 class="panel-title">{{ contactData.hasOwnProperty('id') ? 'View contact' : 'New contact' }}</h6>
+                            <div class="btn-group btn-group-xs pull-right">
+                                <a href="javascript:void(0)" style="color:#ffffff" @click="onClose"><i class="glyphicon glyphicon-remove"></i></a>
+                            </div>
                         </div>
                         <div class="panel-body">
                             <div class="row">
                                 <div class="col-sm-12">
                                     <div class="form-group">
-                                        <label>Email</label>
+                                        <label>To</label>
                                         <div class="input-group">
                                             <span class="input-group-addon"><i class="glyphicon glyphicon-envelope"></i></span>
-                                            <input type="email" class="form-control" placeholder="Please input email" v-model="contact.to_email" />
+                                            <select class=" form-control selectpicker" data-live-search="true" ref="select" v-model="select">
+                                                <option data-tokens=""></option>
+                                                <option v-for="(user, index) in users" v-bind:key="index" :value="user.id">{{ user.username }} ({{ user.email }})</option>
+                                            </select>
+
                                         </div>
                                     </div>
                                     <div class="form-group">
                                         <label>Subject</label>
                                         <div class="input-group">
                                             <span class="input-group-addon"><i class="glyphicon glyphicon-pencil"></i></span>
-                                            <input type="text" class="form-control" placeholder="Please input subject" v-model="contact.subject" required />
+                                            <input type="text" class="form-control" placeholder="Please input subject" v-model="contact.subject" required  :disabled="contactData.hasOwnProperty('id')" />
                                         </div>
                                     </div>
                                     <div class="form-group">
                                         <label>Content</label>
                                         <div class="input-group">
                                             <span class="input-group-addon"><i class="glyphicon glyphicon-pencil"></i></span>
-                                            <textarea  class="form-control" placeholder="Please input subject" rows="15" v-model="contact.content" required wrap="hard"></textarea>
+                                            <textarea  class="form-control" placeholder="Please input subject" rows="8" v-model="contact.content" required :disabled="contactData.hasOwnProperty('id')"></textarea>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="panel-footer">
-                            <button class="btn btn-primary" type="submit" id="btnSend" :disabled="disableButton">Send</button>
+                            <button class="btn btn-primary" type="submit" id="btnSend" :disabled="disableButton || contactData.hasOwnProperty('id')">Send</button>
                             <button class="btn btn-default" type="button" id="btnClear" @click="onClear">Clear</button>
                         </div>
                     </div>
@@ -56,41 +63,50 @@
           return {
                 contact: {
                     from_id: '',
-                    from_email: '',
                     to_id: '',
-                    to_name: '',
-                    to_email: '',
                     subject: '',
                     content: '',
                     created_at: '',
                     status: 0
                 },
+                select: '',
                 current_login_id: '',
                 disableButton: false
           };
         },
         computed: {
-            userSelect() {
-                return this.$store.state.userSelect.data;
+            showSendForm() {
+                return this.$store.state.contacts.showSendForm;
+            },
+            contactData() {
+                if(this.$store.state.contacts.data.hasOwnProperty('id')) {
+                    this.contact = this.$store.state.contacts.data
+                }
+                return this.$store.state.contacts.data;
             },
             userInfo() {
                 return this.$store.state.userInfo.data;
+            },
+            users() {
+                return this.$store.state.users.data;
             }   
         },
         watch: {
-            userSelect(newValue, oldValue) {
-                this.contact.to_id = this.$store.state.userSelect.data.id;
-                if(this.$store.state.userSelect.data.email !== undefined && this.$store.state.userSelect.data.username !== undefined) {
-                    this.contact.to_email = this.$store.state.userSelect.data.username + ';';
-                }
-                this.contact.to_name = this.$store.state.userSelect.data.username;
-                this.contact.subject = this.$store.state.userSelect.data.subject;
-                this.contact.content = this.$store.state.userSelect.data.content;
+            showSendForm(newValue, oldValue) {
+                return newValue;
+            },
+            contactData(newValue, oldValue) {
+                return newValue;
             },
             userInfo(newValue, oldValue) {
-                this.contact.from_id = this.$store.state.userInfo.data.id;
-                this.contact.from_email = this.$store.state.userInfo.data.email;
+                return newValue;
+            },
+            users(newValue) {
+                return newValue;
             }
+        },
+        updated() {
+            $(this.$refs.select).selectpicker('refresh');
         },
         mounted() {
         },
@@ -100,9 +116,11 @@
         methods: {
             async onSend() {
                 var _self = this;
-                if(this.contact.to_id !== undefined) {
+                if(this.select.length) {
                     _self.disableButton = true;
-                    this.contact.created_at = this.getDate();
+                    this.contact.from_id =this.userInfo.id;
+                    this.contact.to_id = this.select;
+                    this.contact.created_at = new Date().getTime();
                     var res = await this.$axios.$post('/addContact', {contact: this.contact});
                     if(res.status) {
                         this.contact.subject = '';
@@ -122,6 +140,9 @@
             onClear() {
                 this.contact.subject = '';
                 this.contact.content = '';
+            },
+            onClose() {
+                this.$store.commit('contacts/showSendForm', false);
             },
             getDate(input, format) {
                 if(format === undefined && format !== null) {
@@ -159,3 +180,10 @@
         }
     }
 </script>
+<style>
+    #send_contact {
+        position: fixed;
+        bottom:-20px;
+        right:0px;
+    }
+</style>

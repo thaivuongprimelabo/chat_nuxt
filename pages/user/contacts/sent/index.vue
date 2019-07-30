@@ -29,7 +29,7 @@
                                         <tr  v-for="(sc, index) in sentContacts" v-bind:key="index" @click="onClickContact(sc)">
                                             <td>{{ ++index }}</td>
                                             <td>{{ sc.subject }}</td>
-                                            <td>{{ sc.to_email }}</td>
+                                            <td>{{ sc.to_name }}</td>
                                             <td style="text-align: center">{{ sc.created_at }}</td>
                                         </tr>
                                         

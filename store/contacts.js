@@ -1,7 +1,9 @@
 export const state = () => ({
     inbox: [],
     sent: [],
-    new_contact: []
+    new_contact: [],
+    showSendForm: false,
+    data: {}
 })
 
 export const mutations = {
@@ -13,5 +15,11 @@ export const mutations = {
     },
     addNewContact (state, new_contact) {
         state.new_contact = new_contact;
-    }
+    },
+    showSendForm(state, showSendForm) {
+        state.showSendForm = showSendForm;
+    },
+    setContactData(state, data) {
+        state.data = data;
+    },
 }

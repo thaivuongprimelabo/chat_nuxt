@@ -5,8 +5,8 @@
           <div class="col-md-12">
             <div class="row">
                 <Sidebar></Sidebar>
-                <SendContact v-if="showSendForm"></SendContact>
-                <slot v-else @clickContact="clickContact"></slot>
+                <slot @clickContact="clickContact"></slot>
+                <SendContact></SendContact>
             </div>
           </div>
         </div>
@@ -30,6 +30,7 @@
 
     var db = firebase.firestore();
     var contactsRef = db.collection('contacts');
+    var usersRef = db.collection('users');
 
     export default {
         components: {
@@ -62,12 +63,39 @@
             var _self = this;
             var current_login_id = localStorage.getItem('current_login_id');
             
-            contactsRef.where('from_id', '==', current_login_id).onSnapshot(function(querySnapshot) {
+            usersRef.onSnapshot(function(querySnapshot) {
+                var userOnline = [];
+                var users = [];
+                querySnapshot.forEach(function(doc) {
+                    var user = doc.data();
+                    if(!user.status) {
+                        return;
+                    }
+                    user.id = doc.id;
+                    if(user.online && user.id !== current_login_id) {
+                        userOnline.push(user);
+                    }
+
+                    if(user.id !== current_login_id) {
+                        users.push(user);
+                    }
+                });
+                _self.$store.commit('userOnline/add', userOnline);
+                _self.$store.commit('users/add', users);
+            })
+            
+            contactsRef.where('from_id', '==', current_login_id).orderBy('created_at', 'desc').onSnapshot(function(querySnapshot) {
                 var sent = [];
                 querySnapshot.forEach(function(doc) {
                     var contact = doc.data();
                     contact.id = doc.id;
-                    sent.push(contact);
+
+                    usersRef.doc(contact.to_id).get().then(function(snapshot) {
+                        contact.to_email = snapshot.data().email;
+                        contact.to_name = snapshot.data().username;
+                        sent.push(contact);
+                    });
+                    
                 });
                 _self.$store.commit('contacts/addSent', sent)
             })
@@ -80,7 +108,12 @@
                 querySnapshot.forEach(function(doc) {
                     var contact = doc.data();
                     contact.id = doc.id;
-                    inbox.push(contact);
+                    usersRef.doc(contact.from_id).get().then(function(snapshot) {
+                        contact.from_email = snapshot.data().email;
+                        contact.from_name = snapshot.data().username;
+                        inbox.push(contact);
+                    });
+                    
                     if(contact.status === 0) {
                         _self.$store.commit('alert/success', 'You got a new message');
                         contactsRef.doc(doc.id).update({status: 1});
