@@ -40,6 +40,14 @@
         "function": "getUsers"
       },
       {
+        "source": "/api/addContact",
+        "function": "addContact"
+      },
+      {
+        "source": "/api/updateContactStatus",
+        "function": "updateContactStatus"
+      },
+      {
         "source": "/user",
         "destination": "/index.html"
       } 

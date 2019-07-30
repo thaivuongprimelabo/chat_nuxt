@@ -1,19 +1,12 @@
 
 <template>
-    <div class="container">
-        <div class="row">
-          <div class="col-md-12">
-            <div class="row">
-                <Sidebar></Sidebar>
-                <SendContact></SendContact>
-            </div>
-          </div>
-        </div>
-    </div>
+    <Contact>
+        <SendContact></SendContact>
+    </Contact>
 </template>
 <script>
-    import Sidebar from '../../../components/Sidebar.vue';
     import SendContact from '../../../components/SendContact.vue';
+    import Contact from '../../../components/Contact.vue';
     import firebase from 'firebase';
     import { setTimeout } from 'timers';
 
@@ -22,7 +15,7 @@
         middleware: 'auth',
         components: {
             SendContact,
-            Sidebar
+            Contact
         },
         data: function() {
           return {

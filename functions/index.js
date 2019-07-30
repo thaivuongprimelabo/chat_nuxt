@@ -39,3 +39,11 @@ exports.getUserInfo = functions.https.onRequest((req, res) => {
 exports.getUsers = functions.https.onRequest((req, res) => {
     api.getUsers(req, res);
 });
+
+exports.updateContactStatus = functions.https.onRequest((req, res) => {
+    api.updateContactStatus(req, res);
+});
+
+exports.addContact = functions.https.onRequest((req, res) => {
+    api.addContact(req, res);
+});

@@ -168,7 +168,9 @@ exports.getUserInfo = function(req, res) {
     var current_login_id = req.body.current_login_id;
 
     usersRef.doc(current_login_id).get().then(function(doc) {
-        output.data = doc.data();
+        var userInfo = doc.data();
+        userInfo.id = doc.id;
+        output.data = userInfo;
         return res.status(200).json(output);
     });
 }
@@ -179,11 +181,14 @@ exports.getUsers = function(req, res) {
         data: []
     }
 
+    var current_login_id = req.body.current_login_id;
+
     usersRef.get().then(function(querySnapshot) {
         querySnapshot.forEach((doc) => {
             var user = doc.data();
-            if(user.status) {
-                user.id = doc.id;
+            user.id = doc.id;
+            user.selected = false;
+            if(user.status && user.id !== current_login_id) {
                 output.data.push(user);
             }
         });
@@ -214,7 +219,7 @@ exports.getSentContacts = function(req, res) {
 
     var current_login_id = req.body.current_login_id;
 
-    contactsRef.where('receive_id', '==', current_login_id).get().then(function(querySnapshot) {
+    contactsRef.where('from_id', '==', current_login_id).get().then(function(querySnapshot) {
         if(querySnapshot.empty) {
             return res.status(200).json(output);
             return;
@@ -222,10 +227,46 @@ exports.getSentContacts = function(req, res) {
 
         querySnapshot.forEach((doc) => {
             var contact = doc.data();
+            contact.id = doc.id;
             output.data.push(contact);
         });
         return res.status(200).json(output);
     });
+}
+
+exports.getInboxContacts = function(req, res) {
+    var output = {
+        status: true,
+        data: []
+    }
+
+    var current_login_id = req.body.current_login_id;
+
+    contactsRef.where('to_id', '==', current_login_id).get().then(function(querySnapshot) {
+        if(querySnapshot.empty) {
+            return res.status(200).json(output);
+            return;
+        }
+
+        querySnapshot.forEach((doc) => {
+            var contact = doc.data();
+            contact.id = doc.id;
+            output.data.push(contact);
+        });
+        return res.status(200).json(output);
+    });
+}
+
+exports.updateContactStatus = function(req, res) {
+    var output = {
+        status: true,
+        data: []
+    }
+    
+    var status = req.body.status;
+    var contact_id = req.body.contact_id
+    contactsRef.doc(contact_id).update({status: status});
+    return res.status(200).json(output);
 }
 
 exports.addContact = function(req, res) {

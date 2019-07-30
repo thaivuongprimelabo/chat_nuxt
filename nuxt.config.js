@@ -11,6 +11,8 @@ import getUsers from './api/getUsers';
 import addMessage from './api/addMessage';
 import addContact from './api/addContact';
 import getSentContacts from './api/getSentContacts';
+import getInboxContacts from './api/getInboxContacts';
+import updateContactStatus from './api/updateContactStatus';
 
 require('dotenv').config()
 
@@ -41,13 +43,8 @@ export default {
     ],
     script: [
       { src: 'https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js', type: 'text/javascript'},
-      // { src: 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js', type: 'text/javascript'},
+      { src: 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js', type: 'text/javascript'},
       { src: '/jquery.md5.js', type: 'text/javascript'},
-      // { src: 'https://www.gstatic.com/firebasejs/6.3.1/firebase-app.js', type: 'text/javascript'},
-      // { src: 'https://www.gstatic.com/firebasejs/6.3.1/firebase-auth.js', type: 'text/javascript'},
-      // { src: 'https://www.gstatic.com/firebasejs/6.3.1/firebase-firestore.js', type: 'text/javascript'},
-      // { src: 'https://www.gstatic.com/firebasejs/6.3.1/firebase-database.js', type: 'text/javascript'},
-      // { src: 'https://www.gstatic.com/firebasejs/3.1.0/firebase-storage.js', type: 'text/javascript'}
     ]
   },
   /*
@@ -89,10 +86,12 @@ export default {
     { path: '/api/getUserInfo', handler: getUserInfo },
     { path: '/api/getUsersOnline', handler: getUsersOnline },
     // { path: '/api/getMessages', handler: getMessages },
-    { path: '/api/getSentContacts', handler: getSentContacts},
     { path: '/api/addContact', handler: addContact},
     { path: '/api/getUsers', handler: getUsers},
-    { path: '/api/addMessage', handler: addMessage }
+    { path: '/api/addMessage', handler: addMessage },
+    { path: '/api/getSentContacts', handler: getSentContacts},
+    { path: '/api/getInboxContacts', handler: getInboxContacts},
+    { path: '/api/updateContactStatus', handler: updateContactStatus},
   ],
 
   axios: {

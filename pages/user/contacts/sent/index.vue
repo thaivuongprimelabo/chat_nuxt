@@ -1,8 +1,7 @@
 
 <template>
-    <div class="row">
-        <div class="col-md-12">
-            <Alert v-bind:error="error" v-bind:success="success"></Alert>
+    <Contact>
+        <div class="col-md-9">
             <form id="submitForm" @submit.prevent="onSend">
                 <div class="panel panel-primary">
                     <div class="panel-heading">
@@ -12,7 +11,7 @@
                     <div class="panel-body">
                         <div class="row">
                             <div class="col-sm-12">
-                                <table class="table table-bordered">
+                                <table class="table table-bordered table-hover" style="cursor:pointer">
                                     <colgroup>
                                         <col width="4%" />
                                         <col width="50%" />
@@ -22,16 +21,16 @@
                                         <tr>
                                             <th>#</th>
                                             <th>Subject</th>
-                                            <th>From</th>
-                                            <th>Time</th>
+                                            <th>To</th>
+                                            <th style="text-align: center">Time</th>
                                         </tr>
                                     </thead>
                                     <tbody v-if="sentContacts.length > 0">
-                                        <tr  v-for="sc in sentContacts" v-bind:key="sc.id">
-                                            <td>1</td>
+                                        <tr  v-for="(sc, index) in sentContacts" v-bind:key="index" @click="onClickContact(sc)">
+                                            <td>{{ ++index }}</td>
                                             <td>{{ sc.subject }}</td>
-                                            <td>{{ sc.receive_id }}</td>
-                                            <td>{{ sc.created_at }}</td>
+                                            <td>{{ sc.to_email }}</td>
+                                            <td style="text-align: center">{{ sc.created_at }}</td>
                                         </tr>
                                         
                                     </tbody>
@@ -47,13 +46,12 @@
                 </div>
             </form>
         </div>
-    </div>
+    </Contact>
 </template>
 <script>
-    import Alert from '../../../../components/Alert.vue';
     import firebase from 'firebase';
     import { setTimeout } from 'timers';
-    import Contacts from '../../../../components/Contacts.vue';
+    import Contact from '../../../../components/Contact.vue';
 
     var current_login_id = localStorage.getItem('current_login_id');
 
@@ -61,30 +59,39 @@
         layout: 'main',
         middleware: 'auth',
         components: {
-            Alert,
-            Contacts
+            Contact
         },
         data: function() {
           return {
-              sentContacts: [],
               error: '',
               success: ''
           };
         },
+        computed: {
+            sentContacts() {
+                return this.$store.state.contacts.sent;
+            }
+        },
+        watch: {
+            sentContacts(newValue, oldValue) {
+                return newValue;
+            },
+        },
         mounted() {
         },
         created() {
-
             var _self = this;
-
-            _self.getSentContacts();
         },
         methods: {
-            async getSentContacts() {
-                var res = await this.$axios.$post('/getSentContacts', {current_login_id: current_login_id});
-                if(res.status) {
-                    this.sentContacts = res.data;
+            onClickContact(row) {
+                var contact = {
+                    id: row.id,
+                    email: row.to_email,
+                    username: row.to_name,
+                    subject: row.subject,
+                    content: row.content
                 }
+                this.$store.commit('userSelect/add', contact);
             }
         }
     }
