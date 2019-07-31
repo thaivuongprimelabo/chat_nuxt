@@ -54,34 +54,7 @@
         },
         computed: {
             functionList() {
-                
-                // for(var i in this.functions) {
-                //     var fs = this.functions[i];
-                //     if(fs.id === 1) {
-                //         var inbox = this.$store.state.contacts.inbox;
-                //         fs.count = inbox.length;
-                //         var count = 0;
-                //         for(var i in inbox) {
-                //             if(inbox[i].status <= 1) {
-                //                 count++;
-                //             }
-                //         }
-                //         fs.new_contact = count;
-                //     }
-
-                //     if(fs.id === 2) {
-                //         fs.count = this.$store.state.contacts.sent.length
-                //     }
-                // }
-                // console.log(this.inbox);
                 this.functions[0].count = this.inbox.length;
-                // var count = 0;
-                // for(var i in this.inbox) {
-                //     if(this.inbox[i].status <= 1) {
-                //         count++;
-                //     }
-                // }
-                console.log(this.not_seen);
                 this.functions[0].not_seen = this.not_seen;
                 this.functions[1].count = this.sent.length;
                 return this.functions;
@@ -95,16 +68,6 @@
             not_seen() {
                 return this.$store.state.contacts.not_seen;
             },
-            // sentCount() {
-            //     return this.$store.state.contacts.sent.length;
-            // },
-            // inboxCount() {
-            //     console.log(this.$store.state.contacts.inbox.length);
-            //     return this.$store.state.contacts.inbox.length;
-            // },
-            // newContactCount() {
-            //     return this.$store.state.contacts.new_contact.length;
-            // },
             userOnline() {
                 return this.$store.state.userOnline.data;
             },
@@ -128,22 +91,11 @@
                     return newValue;
                 }
             },
-            // sentCount(newValue, oldValue) {
-            //     return newValue.length;
-            // },
-            // inboxCount(newValue, oldValue) {
-            //     console.log(newValue.length);
-            //     return newValue.length;
-            // },
-            // newContactCount(newValue, oldValue) {
-            //     return newValue.length;
-            // },
-            // userOnline(newValue, oldValue) {
-            //     return newValue;
-            // },
-            // users(newValue, oldValue) {
-            //     return newValue;
-            // }
+            userOnline(newValue, oldValue) {
+                if(newValue !== oldValue) {
+                    return newValue;
+                }
+            }
         },
         mounted() {
         },

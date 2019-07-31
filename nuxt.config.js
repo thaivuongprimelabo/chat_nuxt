@@ -22,8 +22,8 @@ export default {
     dir: 'public'
   },
   env: {
-    baseUrl: process.env.BASE_URL || 'http://localhost:3000'
-    // baseUrl: 'https://testfirebase9999.firebaseapp.com'
+    // baseUrl: process.env.BASE_URL || 'http://localhost:3000'
+    baseUrl: 'https://testfirebase9999.firebaseapp.com'
   },
   /*
   ** Headers of the page
@@ -101,9 +101,9 @@ export default {
   ],
 
   axios: {
-    // baseURL: 'https://testfirebase9999.firebaseapp.com/api'
+    baseURL: 'https://testfirebase9999.firebaseapp.com/api'
     // baseURL: 'http://localhost:5000/testfirebase9999/us-central1/api'
-    baseURL: 'http://localhost:3000/api'
+    // baseURL: 'http://localhost:3000/api'
   },
   // srcDir: 'client/'
 }

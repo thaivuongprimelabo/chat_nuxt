@@ -28,9 +28,16 @@
     
     !firebase.apps.length ? firebase.initializeApp(config) : '';
 
+    var current_login_id = localStorage.getItem('current_login_id');
+
+    // Firestore
     var db = firebase.firestore();
     var contactsRef = db.collection('contacts');
     var usersRef = db.collection('users');
+
+    // Realtime database (using for check online/offline)
+    var dbRealtime = firebase.database();
+    var userStatusRef = dbRealtime.ref('/status');
 
     var getDate = function(input, format) {
         if(format === undefined && format !== null) {
@@ -95,28 +102,64 @@
         },
         created() {
             var _self = this;
-            var current_login_id = localStorage.getItem('current_login_id');
-            
-            usersRef.onSnapshot(function(querySnapshot) {
-                var userOnline = [];
+
+            // Users
+            usersRef.where('status', '==', 1).onSnapshot(function(querySnapshot) {
                 var users = [];
                 querySnapshot.forEach(function(doc) {
                     var user = doc.data();
-                    if(!user.status) {
-                        return;
-                    }
-                    user.id = doc.id;
-                    if(user.online && user.id !== current_login_id) {
-                        userOnline.push(user);
-                    }
-
-                    if(user.id !== current_login_id) {
+                    if(doc.id !== current_login_id) {
+                        user.id = doc.id;
                         users.push(user);
                     }
-                });
-                _self.$store.commit('userOnline/add', userOnline);
+                })
+
                 _self.$store.commit('users/add', users);
-            })
+            });
+
+            // Listen user online/offline
+            var userStatusDatabaseRef = dbRealtime.ref('/status/' + current_login_id);
+            var isOfflineForDatabase = {
+                state: 'offline',
+            };
+
+            var isOnlineForDatabase = {
+                state: 'online',
+            };
+
+            dbRealtime.ref('.info/connected').on('value', function(snapshot) {
+                if (snapshot.val() == false) {
+                    return;
+                };
+
+                userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function() {
+                    // The promise returned from .onDisconnect().set() will
+                    // resolve as soon as the server acknowledges the onDisconnect() 
+                    // request, NOT once we've actually disconnected:
+                    // https://firebase.google.com/docs/reference/js/firebase.database.OnDisconnect
+
+                    // We can now safely set ourselves as 'online' knowing that the
+                    // server will mark us as offline once we lose connection.
+                    userStatusDatabaseRef.set(isOnlineForDatabase);
+                });
+            });
+
+            userStatusRef.on('value', function(snapshot) {
+                var userStatus = snapshot.val();
+                var keys = Object.keys(userStatus);
+                if(keys.length) {
+                    var userOnline = [];
+                    for(var i in keys) {
+                        var user_id = keys[i];
+                        if(userStatus[user_id].state === 'online' && user_id !== current_login_id) {
+                            _self.getUserInfo(user_id).then(res => {
+                                userOnline.push(res);
+                            });
+                        }
+                    }
+                    _self.$store.commit('userOnline/add', userOnline)
+                }
+            });
             
             // Sent box
             contactsRef.where('from_id', '==', current_login_id).orderBy('created_at', 'desc').onSnapshot(function(querySnapshot) {
@@ -125,9 +168,11 @@
                     var contact = change.doc.data();
                     contact.id = change.doc.id;
                     contact.created_at = getDate(contact.created_at);
-                    usersRef.doc(contact.to_id).get().then(function(snapshot) {
-                        contact.to_email = snapshot.data().email;
-                        contact.to_name = snapshot.data().username;
+
+                    _self.getUserInfo(contact.to_id).then(res => {
+                        contact.to_email = res.email;
+                        contact.to_name = res.username;
+
                         if(change.type === 'added') {
                             var current_sent = _self.$store.state.contacts.sent;
 
@@ -147,14 +192,11 @@
                             } else {
                                 _self.$store.commit('contacts/addSent', contact)
                             }
-
-                            
                         }
                     });
-                    
                 });
                 
-            })
+            });
             
             // Inbox
             contactsRef.where('to_id', '==', current_login_id).orderBy('created_at', 'desc').onSnapshot(function(querySnapshot) {
@@ -166,9 +208,9 @@
                     
                     contact.id = change.doc.id;
                     contact.created_at = getDate(contact.created_at);
-                    usersRef.doc(contact.from_id).get().then(function(snapshot) {
-                        contact.from_email = snapshot.data().email;
-                        contact.from_name = snapshot.data().username;
+                   _self.getUserInfo(contact.to_id).then(res => {
+                        contact.from_email = res.email;
+                        contact.from_name = res.username;
                         if(change.type === 'added') {
                             var current_inbox = _self.$store.state.contacts.inbox;
                             if(current_inbox.length) {
@@ -190,8 +232,6 @@
                         }
                     });
 
-                    
-                    
                     if(contact.status === 0) {
                         _self.$store.commit('alert/success', 'You got a new message');
                         contactsRef.doc(contact.id).update({status: 1});
@@ -202,12 +242,12 @@
             })
         },
         methods: {
-            // clickMenu() {
-            //     this.showSendForm = false;
-            // },
-            // clickUser() {
-            //     this.showSendForm = true;
-            // }
+            async getUserInfo(user_id) {
+                var res = await this.$axios.$post('/getUserInfo', {current_login_id: user_id});
+                if(res.status) {
+                    return res.data;
+                }
+            }
         }
     }
 </script>
