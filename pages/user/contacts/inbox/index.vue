@@ -131,20 +131,11 @@
                 this.$router.push('/user/contacts/reply');
             },
             async getInboxContacts() {
-                // var res = await this.$axios.$post('/getInboxContacts', {current_login_id: current_login_id});
-                // if(res.status) {
-                //     var contacts = res.data;
-                //     for(var i in contacts) {
-                //         var contact = contacts[i];
-                //         var res1 = await this.$axios.$post('/getUserInfo', {current_login_id: contact.from_id});
-                //         if(res1.status) {
-                //             var user = res1.data;
-                //             contact.from_name = user.username;
-                //             contact.created_at = getDate(contact.created_at);
-                //         }
-                //     }
-                //     this.$store.commit('contacts/setInbox', contacts);
-                // }
+                for(var i in this.inboxContacts) {
+                    if(this.inboxContacts[i].id === this.contactData.id) {
+                        this.inboxContacts[i].status = 2;
+                    }
+                }
             }
         }
     }

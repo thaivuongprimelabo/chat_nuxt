@@ -28,7 +28,10 @@ export const mutations = {
         }
     },
     setNotSeen(state, not_seen) {
-        state.not_seen = state.not_seen - 1;
+        if(state.not_seen > 0) {
+            state.not_seen = state.not_seen - 1;
+        }
+        
     },
     showSendForm(state, showSendForm) {
         state.showSendForm = showSendForm;
