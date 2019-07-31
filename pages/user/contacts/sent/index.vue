@@ -11,7 +11,7 @@
                     <div class="panel-body">
                         <div class="row">
                             <div class="col-sm-12">
-                                <table class="table table-bordered table-hover" style="cursor:pointer">
+                                <table class="table table-hover" style="cursor:pointer">
                                     <colgroup>
                                         <col width="4%" />
                                         <col width="50%" />
@@ -83,15 +83,10 @@
             var _self = this;
         },
         methods: {
-            onClickContact(row) {
-                var contact = {
-                    id: row.id,
-                    email: row.to_email,
-                    username: row.to_name,
-                    subject: row.subject,
-                    content: row.content
-                }
-                this.$store.commit('userSelect/add', contact);
+            async onClickContact(contact) {
+                this.$store.commit('contacts/setContactData', contact);
+                this.$store.commit('contacts/showSendForm', false);
+                this.$router.push('/user/contacts/view');
             }
         }
     }

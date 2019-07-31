@@ -48,6 +48,10 @@
         "function": "updateContactStatus"
       },
       {
+        "source": "/api/getInboxContacts",
+        "function": "getInboxContacts"
+      },
+      {
         "source": "/user",
         "destination": "/index.html"
       } 

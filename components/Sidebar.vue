@@ -19,8 +19,11 @@
                 </div>
                 <div class="panel-body">
                     <ul id="listOnline" class="list-group">
-                        <li class="list-group-item" v-for="fs in functions" v-bind:key="fs.id"><a href="javascript:void(0)" @click="onClickMenu(fs.path)">{{ fs.name }} ({{ fs.count }})</a><span class="badge badge-danger" v-show="fs.new_contact">{{ fs.new_contact }}</span></li>
+                        <li class="list-group-item" v-for="fs in functionList" v-bind:key="fs.id"><a href="javascript:void(0)" @click="onClickMenu(fs.path)">{{ fs.name }} ({{ fs.count }})</a><span class="badge badge-danger" v-show="fs.not_seen">{{ fs.not_seen }}</span></li>
                     </ul>
+                </div>
+                <div class="panel-footer">
+                    <button class="btn btn-danger" @click="this.onNewContact"><i class="glyphicon glyphicon-plus"></i> New contact</button>
                 </div>
             </div>
         </div>
@@ -37,7 +40,7 @@
                         path: '/user/contacts/inbox',
                         name: 'Inbox',
                         count: 0,
-                        new_contact: 0
+                        not_seen: 0
                     },
                     {
                         id: 2,
@@ -50,15 +53,58 @@
             }
         },
         computed: {
-            sentCount() {
-                return this.$store.state.contacts.sent !== undefined ? this.$store.state.contacts.sent.length : 0;
+            functionList() {
+                
+                // for(var i in this.functions) {
+                //     var fs = this.functions[i];
+                //     if(fs.id === 1) {
+                //         var inbox = this.$store.state.contacts.inbox;
+                //         fs.count = inbox.length;
+                //         var count = 0;
+                //         for(var i in inbox) {
+                //             if(inbox[i].status <= 1) {
+                //                 count++;
+                //             }
+                //         }
+                //         fs.new_contact = count;
+                //     }
+
+                //     if(fs.id === 2) {
+                //         fs.count = this.$store.state.contacts.sent.length
+                //     }
+                // }
+                // console.log(this.inbox);
+                this.functions[0].count = this.inbox.length;
+                // var count = 0;
+                // for(var i in this.inbox) {
+                //     if(this.inbox[i].status <= 1) {
+                //         count++;
+                //     }
+                // }
+                console.log(this.not_seen);
+                this.functions[0].not_seen = this.not_seen;
+                this.functions[1].count = this.sent.length;
+                return this.functions;
             },
-            inboxCount() {
-                return this.$store.state.contacts.inbox !== undefined ? this.$store.state.contacts.inbox.length : 0;
+            inbox() {
+                return this.$store.state.contacts.inbox;
             },
-            newContactCount() {
-                return this.$store.state.contacts.new_contact !== undefined ? this.$store.state.contacts.new_contact.length : 0;
+            sent() {
+                return this.$store.state.contacts.sent;
             },
+            not_seen() {
+                return this.$store.state.contacts.not_seen;
+            },
+            // sentCount() {
+            //     return this.$store.state.contacts.sent.length;
+            // },
+            // inboxCount() {
+            //     console.log(this.$store.state.contacts.inbox.length);
+            //     return this.$store.state.contacts.inbox.length;
+            // },
+            // newContactCount() {
+            //     return this.$store.state.contacts.new_contact.length;
+            // },
             userOnline() {
                 return this.$store.state.userOnline.data;
             },
@@ -67,21 +113,37 @@
             }   
         },
         watch: {
-            sentCount(newValue, oldValue) {
-                this.functions[1].count = newValue;
+            inbox(newValue, oldValue) {
+                if(newValue !== oldValue) {
+                    return newValue;
+                } 
             },
-            inboxCount(newValue, oldValue) {
-                this.functions[0].count = newValue;
+            sent(newValue, oldValue) {
+                if(newValue !== oldValue) {
+                    return newValue;
+                }
             },
-            newContactCount(newValue, oldValue) {
-                this.functions[0].new_contact = newValue;
+            not_seen(newValue, oldValue) {
+                if(newValue !== oldValue) {
+                    return newValue;
+                }
             },
-            userOnline(newValue, oldValue) {
-                return newValue;
-            },
-            users(newValue, oldValue) {
-                return newValue;
-            }
+            // sentCount(newValue, oldValue) {
+            //     return newValue.length;
+            // },
+            // inboxCount(newValue, oldValue) {
+            //     console.log(newValue.length);
+            //     return newValue.length;
+            // },
+            // newContactCount(newValue, oldValue) {
+            //     return newValue.length;
+            // },
+            // userOnline(newValue, oldValue) {
+            //     return newValue;
+            // },
+            // users(newValue, oldValue) {
+            //     return newValue;
+            // }
         },
         mounted() {
         },
@@ -111,6 +173,11 @@
             onClickMenu(path) {
                 this.$router.replace(path);
                 this.$store.commit('userSelect/add', {});
+                this.$store.commit('contacts/showSendForm', false);
+            },
+            onNewContact() {
+                this.$store.commit('contacts/setContactData', {});
+                this.$store.commit('contacts/showSendForm', true);
             }
         }
     }

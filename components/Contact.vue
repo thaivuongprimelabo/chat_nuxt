@@ -32,6 +32,40 @@
     var contactsRef = db.collection('contacts');
     var usersRef = db.collection('users');
 
+    var getDate = function(input, format) {
+        if(format === undefined && format !== null) {
+            format = 'yyyy-mm-dd hh:ii:ss';
+        }
+        var date = new Date();
+        if(input !== undefined && input !== null) {
+            var date = new Date(input);
+        }
+
+        var year = date.getFullYear();
+        var month = date.getMonth() === 11 ? 12 : date.getMonth() + 1;
+        month = month.toString().length == 1 ? '0' + month : month.toString();
+        var day  = date.getDate();
+        day = day.toString().length == 1 ? '0' + day : day.toString();
+
+        var hour = date.getHours();
+        hour = hour.toString().length == 1 ? '0' + hour : hour.toString();
+        date.setMinutes(date.getMinutes() + 5);
+        date = new Date(date);
+        var minute = date.getMinutes();
+        minute = minute.toString().length == 1 ? '0' + minute : minute.toString();
+        var second = date.getSeconds();
+        second = second.toString().length == 1 ? '0' + second : second.toString();
+
+        format = format.replace('yyyy', year);
+        format = format.replace('mm', month);
+        format = format.replace('dd', day);
+        format = format.replace('hh', hour);
+        format = format.replace('ii', minute);
+        format = format.replace('ss', second);
+
+        return format;
+    }
+
     export default {
         components: {
             Sidebar,
@@ -84,47 +118,86 @@
                 _self.$store.commit('users/add', users);
             })
             
+            // Sent box
             contactsRef.where('from_id', '==', current_login_id).orderBy('created_at', 'desc').onSnapshot(function(querySnapshot) {
                 var sent = [];
-                querySnapshot.forEach(function(doc) {
-                    var contact = doc.data();
-                    contact.id = doc.id;
-
+                querySnapshot.docChanges().forEach(function(change) {
+                    var contact = change.doc.data();
+                    contact.id = change.doc.id;
+                    contact.created_at = getDate(contact.created_at);
                     usersRef.doc(contact.to_id).get().then(function(snapshot) {
                         contact.to_email = snapshot.data().email;
                         contact.to_name = snapshot.data().username;
-                        sent.push(contact);
+                        if(change.type === 'added') {
+                            var current_sent = _self.$store.state.contacts.sent;
+
+                            if(current_sent.length) {
+                                var exists = false;
+                                for(var i in current_sent) {
+                                    var st = current_sent[i];
+                                    if(st.id === contact.id) {
+                                        exists = true;
+                                        break;
+                                    }
+                                }
+
+                                if(!exists) {
+                                    _self.$store.commit('contacts/addSent', contact)
+                                }
+                            } else {
+                                _self.$store.commit('contacts/addSent', contact)
+                            }
+
+                            
+                        }
                     });
                     
                 });
-                _self.$store.commit('contacts/addSent', sent)
+                
             })
             
-            
+            // Inbox
             contactsRef.where('to_id', '==', current_login_id).orderBy('created_at', 'desc').onSnapshot(function(querySnapshot) {
                 var inbox = [];
                 var new_contact = [];
 
-                querySnapshot.forEach(function(doc) {
-                    var contact = doc.data();
-                    contact.id = doc.id;
+                querySnapshot.docChanges().forEach(function(change) {
+                    var contact = change.doc.data();
+                    
+                    contact.id = change.doc.id;
+                    contact.created_at = getDate(contact.created_at);
                     usersRef.doc(contact.from_id).get().then(function(snapshot) {
                         contact.from_email = snapshot.data().email;
                         contact.from_name = snapshot.data().username;
-                        inbox.push(contact);
+                        if(change.type === 'added') {
+                            var current_inbox = _self.$store.state.contacts.inbox;
+                            if(current_inbox.length) {
+                                var exists = false;
+                                for(var i in current_inbox) {
+                                    var ib = current_inbox[i];
+                                    if(ib.id === contact.id) {
+                                        exists = true;
+                                        break;
+                                    }
+                                }
+
+                                if(!exists) {
+                                    _self.$store.commit('contacts/addInbox', contact);
+                                }
+                            } else {
+                                _self.$store.commit('contacts/addInbox', contact);
+                            }
+                        }
                     });
+
+                    
                     
                     if(contact.status === 0) {
                         _self.$store.commit('alert/success', 'You got a new message');
-                        contactsRef.doc(doc.id).update({status: 1});
-                    }
-
-                    if(contact.status === 1) {
-                        new_contact.push(contact);
+                        contactsRef.doc(contact.id).update({status: 1});
                     }
                 });
-                _self.$store.commit('contacts/addInbox', inbox);
-                _self.$store.commit('contacts/addNewContact', new_contact);
+
                 
             })
         },

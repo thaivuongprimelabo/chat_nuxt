@@ -19,6 +19,24 @@
 </template>
 <script>
     import { mapMutations } from 'vuex';
+    import firebase from 'firebase';
+    var config = {
+        apiKey: "AIzaSyBF6T-HeFPb1cLfq-jFfIpj2So7RbwViGo",
+        authDomain: "testfirebase9999.firebaseapp.com",
+        projectId: "testfirebase9999",
+        databaseURL: "https://testfirebase9999.firebaseio.com",
+        storageBucket: "testfirebase9999.appspot.com",
+    };
+    
+    !firebase.apps.length ? firebase.initializeApp(config) : '';
+
+    var current_login_id = localStorage.getItem('current_login_id');
+    var db = firebase.firestore();
+    var dbRealtime = firebase.database();
+    var usersRef = db.collection('users')
+    var messagesRef = db.collection('messages');
+    var userStatusDatabaseRef = dbRealtime.ref('/status/' + current_login_id);
+    var userStatusRef = dbRealtime.ref('/status');
 
     export default {
         data: function() {
@@ -55,11 +73,12 @@
                 }
             },
             async onLogout() {
-                var res = await this.$axios.$post('/updateOnline', {id: this.current_login_id, online: 0});
-                if(res.status) {
-                    localStorage.removeItem('current_login_id');
-                    this.$router.replace('/user/login');
-                }
+                var isOfflineForDatabase = {
+                    state: 'offline',
+                };
+                userStatusDatabaseRef.set(isOfflineForDatabase);
+                localStorage.removeItem('current_login_id');
+                this.$router.replace('/user/login');
             },
         }
     }

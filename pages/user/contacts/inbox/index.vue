@@ -7,9 +7,6 @@
                     <div class="panel-heading">
                         <i class="glyphicon glyphicon-envelope"></i>
                         <h6 class="panel-title">Inbox</h6>
-                        <div class="btn-group btn-group-xs pull-right">
-                            <button type="button" class="btn btn-danger" @click="this.onNewContact">New contact</button>
-                        </div>
                     </div>
                     <div class="panel-body">
                         <div class="row">
@@ -59,6 +56,40 @@
 
     var current_login_id = localStorage.getItem('current_login_id');
 
+    var getDate = function(input, format) {
+        if(format === undefined && format !== null) {
+            format = 'yyyy-mm-dd hh:ii:ss';
+        }
+        var date = new Date();
+        if(input !== undefined && input !== null) {
+            var date = new Date(input);
+        }
+
+        var year = date.getFullYear();
+        var month = date.getMonth() === 11 ? 12 : date.getMonth() + 1;
+        month = month.toString().length == 1 ? '0' + month : month.toString();
+        var day  = date.getDate();
+        day = day.toString().length == 1 ? '0' + day : day.toString();
+
+        var hour = date.getHours();
+        hour = hour.toString().length == 1 ? '0' + hour : hour.toString();
+        date.setMinutes(date.getMinutes() + 5);
+        date = new Date(date);
+        var minute = date.getMinutes();
+        minute = minute.toString().length == 1 ? '0' + minute : minute.toString();
+        var second = date.getSeconds();
+        second = second.toString().length == 1 ? '0' + second : second.toString();
+
+        format = format.replace('yyyy', year);
+        format = format.replace('mm', month);
+        format = format.replace('dd', day);
+        format = format.replace('hh', hour);
+        format = format.replace('ii', minute);
+        format = format.replace('ss', second);
+
+        return format;
+    }
+
     export default {
         layout: 'main',
         middleware: 'auth',
@@ -74,15 +105,20 @@
         computed: {
             inboxContacts() {
                 return this.$store.state.contacts.inbox;
+            },
+            contactData() {
+                return this.$store.state.contacts.data;
             }
         },
         watch: {
             inboxContacts(newValue, oldValue) {
                 return newValue;
             },
+
         },
         created() {
             var _self = this;
+            this.getInboxContacts();
         },
         methods: {
             async onClickContact(contact) {
@@ -90,11 +126,25 @@
                     var res = await this.$axios.$post('/updateContactStatus', {contact_id: contact.id, status: 2});
                 }
                 this.$store.commit('contacts/setContactData', contact);
-                this.$store.commit('contacts/showSendForm', true);
+                this.$store.commit('contacts/showSendForm', false);
+                this.$store.commit('contacts/setNotSeen', '');
+                this.$router.push('/user/contacts/reply');
             },
-            onNewContact() {
-                this.$store.commit('contacts/setContactData', {});
-                this.$store.commit('contacts/showSendForm', true);
+            async getInboxContacts() {
+                // var res = await this.$axios.$post('/getInboxContacts', {current_login_id: current_login_id});
+                // if(res.status) {
+                //     var contacts = res.data;
+                //     for(var i in contacts) {
+                //         var contact = contacts[i];
+                //         var res1 = await this.$axios.$post('/getUserInfo', {current_login_id: contact.from_id});
+                //         if(res1.status) {
+                //             var user = res1.data;
+                //             contact.from_name = user.username;
+                //             contact.created_at = getDate(contact.created_at);
+                //         }
+                //     }
+                //     this.$store.commit('contacts/setInbox', contacts);
+                // }
             }
         }
     }

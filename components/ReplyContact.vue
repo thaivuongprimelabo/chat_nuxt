@@ -1,42 +1,42 @@
 <template>
-    <div id="send_contact" class="col-md-6">
+    <div id="reply_contact" class="col-md-9">
         <div class="row">
             <div class="col-md-12">
-                <form id="submitForm" @submit.prevent="onSend" v-show="showSendForm">
+                <form id="submitForm" @submit.prevent="onSend">
                     <div class="panel panel-primary">
                         <div class="panel-heading">
                             <i class="glyphicon glyphicon-envelope"></i>
-                            <h6 class="panel-title">New contact</h6>
-                            <div class="btn-group btn-group-xs pull-right">
-                                <a href="javascript:void(0)" style="color:#ffffff" @click="onClose"><i class="glyphicon glyphicon-remove"></i></a>
-                            </div>
+                            <h6 class="panel-title">Reply contact</h6>
                         </div>
                         <div class="panel-body">
                             <div class="row">
                                 <div class="col-sm-12">
                                     <div class="form-group">
-                                        <label>To</label>
+                                        <label>From</label>
                                         <div class="input-group">
                                             <span class="input-group-addon"><i class="glyphicon glyphicon-envelope"></i></span>
-                                            <select class=" form-control selectpicker" data-live-search="true" ref="select" v-model="select">
-                                                <option data-tokens=""></option>
-                                                <option v-for="(user, index) in users" v-bind:key="index" :value="user.id">{{ user.username }} ({{ user.email }})</option>
-                                            </select>
-
+                                            <input type="text" class="form-control" placeholder="Please input email" v-model="contactData.from_name" required disabled />
                                         </div>
                                     </div>
                                     <div class="form-group">
                                         <label>Subject</label>
                                         <div class="input-group">
                                             <span class="input-group-addon"><i class="glyphicon glyphicon-pencil"></i></span>
-                                            <input type="text" class="form-control" placeholder="Please input subject" v-model="contact.subject" required />
+                                            <input type="text" class="form-control" placeholder="Please input subject" v-model="contactData.subject" required disabled />
                                         </div>
                                     </div>
                                     <div class="form-group">
                                         <label>Content</label>
                                         <div class="input-group">
                                             <span class="input-group-addon"><i class="glyphicon glyphicon-pencil"></i></span>
-                                            <textarea  class="form-control" placeholder="Please input subject" rows="8" v-model="contact.content" required></textarea>
+                                            <textarea  class="form-control" placeholder="Please input subject" rows="8" v-model="contactData.content" required disabled></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Reply Content</label>
+                                        <div class="input-group">
+                                            <span class="input-group-addon"><i class="glyphicon glyphicon-pencil"></i></span>
+                                            <textarea  class="form-control" placeholder="Please input subject" rows="8" v-model="reply_content"></textarea>
                                         </div>
                                     </div>
                                 </div>
@@ -45,6 +45,9 @@
                         <div class="panel-footer">
                             <button class="btn btn-primary" type="submit" id="btnSend" :disabled="disableButton">Send</button>
                             <button class="btn btn-default" type="button" id="btnClear" @click="onClear">Clear</button>
+                            <div class="btn-group btn-group pull-right">
+                                <button class="btn btn-warning" type="button" id="btnBack" @click="onBack">Back</button>
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -61,22 +64,18 @@
         },
         data: function() {
           return {
-                contact: {
-                    from_id: '',
-                    to_id: '',
-                    subject: '',
-                    content: '',
-                    created_at: '',
-                    status: 0
-                },
-                select: '',
+                reply_content: '',
                 current_login_id: '',
                 disableButton: false
           };
         },
         computed: {
-            showSendForm() {
-                return this.$store.state.contacts.showSendForm;
+            contactData() {
+                // if(this.$store.state.contacts.data.hasOwnProperty('id')) {
+                //     this.contact = this.$store.state.contacts.data
+                //     this.contact.reply_id = this.$store.state.contacts.data.id;
+                // }
+                return this.$store.state.contacts.data;
             },
             userInfo() {
                 return this.$store.state.userInfo.data;
@@ -86,7 +85,7 @@
             }   
         },
         watch: {
-            showSendForm(newValue, oldValue) {
+            contactData(newValue, oldValue) {
                 return newValue;
             },
             userInfo(newValue, oldValue) {
@@ -100,6 +99,9 @@
             $(this.$refs.select).selectpicker('refresh');
         },
         mounted() {
+            if(!this.contactData.hasOwnProperty('id')) {
+                this.$router.back();
+            }
         },
         created() {
             
@@ -107,22 +109,29 @@
         methods: {
             async onSend() {
                 var _self = this;
-                if(this.select.length) {
+                if(this.reply_content.length) {
                     _self.disableButton = true;
-                    this.contact.from_id =this.userInfo.id;
-                    this.contact.to_id = this.select;
-                    this.contact.created_at = new Date().getTime();
-                    var res = await this.$axios.$post('/addContact', {contact: this.contact});
+                    var subject = this.contactData.subject.replace('[Reply from: ' + this.contactData.from_name + '] ', '');
+                    var contact = {
+                        from_id: this.userInfo.id,
+                        to_id: this.contactData.from_id,
+                        subject: '[Reply from: ' + this.userInfo.username + '] ' + subject,
+                        content: this.reply_content,
+                        reply_contact_id: this.contactData.id,
+                        created_at: new Date().getTime(),
+                        status: 0
+                    }
+
+                    var res = await this.$axios.$post('/addContact', {contact: contact});
                     if(res.status) {
-                        this.contact.subject = '';
-                        this.contact.content = '';
-                        this.$store.commit('alert/success', 'Send contact successfully.');
+                        
+                        this.$store.commit('alert/success', 'Reply contact successfully.');
                     }
 
                     _self.disableButton = false;
                     
                 } else {
-                    this.$store.commit('alert/error', 'Please select an user to contact.');
+                    this.$store.commit('alert/error', 'Please input reply content.');
                     
                 }
                 
@@ -134,6 +143,9 @@
             },
             onClose() {
                 this.$store.commit('contacts/showSendForm', false);
+            },
+            onBack() {
+                this.$router.back();
             },
             getDate(input, format) {
                 if(format === undefined && format !== null) {
@@ -172,10 +184,4 @@
     }
 </script>
 <style>
-    #send_contact {
-        position: fixed;
-        bottom:-20px;
-        right:0px;
-        z-index: 9999;
-    }
 </style>

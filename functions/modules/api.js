@@ -246,10 +246,9 @@ exports.getInboxContacts = function(req, res) {
 
     var current_login_id = req.body.current_login_id;
 
-    contactsRef.where('to_id', '==', current_login_id).get().then(function(querySnapshot) {
+    contactsRef.where('to_id', '==', current_login_id).orderBy('created_at', 'desc').get().then(function(querySnapshot) {
         if(querySnapshot.empty) {
             return res.status(200).json(output);
-            return;
         }
 
         querySnapshot.forEach((doc) => {

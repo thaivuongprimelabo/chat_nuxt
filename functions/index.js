@@ -47,3 +47,7 @@ exports.updateContactStatus = functions.https.onRequest((req, res) => {
 exports.addContact = functions.https.onRequest((req, res) => {
     api.addContact(req, res);
 });
+
+exports.getInboxContacts = functions.https.onRequest((req, res) => {
+    api.getInboxContacts(req, res);
+});
