@@ -17,61 +17,7 @@
     import SendContact from './SendContact.vue';
     import Alert from './Alert.vue';
     import { setTimeout } from 'timers';
-    import firebase from 'firebase';
-    var config = {
-        apiKey: "AIzaSyBF6T-HeFPb1cLfq-jFfIpj2So7RbwViGo",
-        authDomain: "testfirebase9999.firebaseapp.com",
-        projectId: "testfirebase9999",
-        databaseURL: "https://testfirebase9999.firebaseio.com",
-        storageBucket: "testfirebase9999.appspot.com",
-    };
-    
-    !firebase.apps.length ? firebase.initializeApp(config) : '';
-
-    var current_login_id = localStorage.getItem('current_login_id');
-
-    // Firestore
-    var db = firebase.firestore();
-    var contactsRef = db.collection('contacts');
-    var usersRef = db.collection('users');
-
-    // Realtime database (using for check online/offline)
-    var dbRealtime = firebase.database();
-    var userStatusRef = dbRealtime.ref('/status');
-
-    var getDate = function(input, format) {
-        if(format === undefined && format !== null) {
-            format = 'yyyy-mm-dd hh:ii:ss';
-        }
-        var date = new Date();
-        if(input !== undefined && input !== null) {
-            var date = new Date(input);
-        }
-
-        var year = date.getFullYear();
-        var month = date.getMonth() === 11 ? 12 : date.getMonth() + 1;
-        month = month.toString().length == 1 ? '0' + month : month.toString();
-        var day  = date.getDate();
-        day = day.toString().length == 1 ? '0' + day : day.toString();
-
-        var hour = date.getHours();
-        hour = hour.toString().length == 1 ? '0' + hour : hour.toString();
-        date.setMinutes(date.getMinutes() + 5);
-        date = new Date(date);
-        var minute = date.getMinutes();
-        minute = minute.toString().length == 1 ? '0' + minute : minute.toString();
-        var second = date.getSeconds();
-        second = second.toString().length == 1 ? '0' + second : second.toString();
-
-        format = format.replace('yyyy', year);
-        format = format.replace('mm', month);
-        format = format.replace('dd', day);
-        format = format.replace('hh', hour);
-        format = format.replace('ii', minute);
-        format = format.replace('ss', second);
-
-        return format;
-    }
+    import helpers from '~/plugins/helpers';
 
     export default {
         components: {
@@ -102,23 +48,15 @@
         },
         created() {
             var _self = this;
+            var current_login_id = localStorage.getItem('current_login_id');
 
             // Users
-            usersRef.where('status', '==', 1).onSnapshot(function(querySnapshot) {
-                var users = [];
-                querySnapshot.forEach(function(doc) {
-                    var user = doc.data();
-                    if(doc.id !== current_login_id) {
-                        user.id = doc.id;
-                        users.push(user);
-                    }
-                })
-
+            helpers.getUsers(function(users) {
                 _self.$store.commit('users/add', users);
             });
 
             // Listen user online/offline
-            var userStatusDatabaseRef = dbRealtime.ref('/status/' + current_login_id);
+            var userStatusDatabaseRef = helpers.getRealtimeDB().ref('/status/' + current_login_id);
             var isOfflineForDatabase = {
                 state: 'offline',
             };
@@ -127,7 +65,7 @@
                 state: 'online',
             };
 
-            dbRealtime.ref('.info/connected').on('value', function(snapshot) {
+            helpers.getRealtimeDB().ref('.info/connected').on('value', function(snapshot) {
                 if (snapshot.val() == false) {
                     return;
                 };
@@ -144,7 +82,7 @@
                 });
             });
 
-            userStatusRef.on('value', function(snapshot) {
+            helpers.getUserStatusRef().on('value', function(snapshot) {
                 var userStatus = snapshot.val();
                 var keys = Object.keys(userStatus);
                 if(keys.length) {
@@ -152,102 +90,49 @@
                     for(var i in keys) {
                         var user_id = keys[i];
                         if(userStatus[user_id].state === 'online' && user_id !== current_login_id) {
-                            _self.getUserInfo(user_id).then(res => {
-                                userOnline.push(res);
+                            helpers.getUsersRef().doc(user_id).get().then(function(doc) {
+                                var user = doc.data();
+                                userOnline.push(user);
                             });
                         }
                     }
                     _self.$store.commit('userOnline/add', userOnline)
                 }
             });
-            
+
             // Sent box
-            contactsRef.where('from_id', '==', current_login_id).orderBy('created_at', 'desc').onSnapshot(function(querySnapshot) {
-                var sent = [];
-                querySnapshot.docChanges().forEach(function(change) {
-                    var contact = change.doc.data();
-                    contact.id = change.doc.id;
-                    contact.created_at = getDate(contact.created_at);
-
-                    _self.getUserInfo(contact.to_id).then(res => {
-                        contact.to_email = res.email;
-                        contact.to_name = res.username;
-
-                        if(change.type === 'added') {
-                            var current_sent = _self.$store.state.contacts.sent;
-
-                            if(current_sent.length) {
-                                var exists = false;
-                                for(var i in current_sent) {
-                                    var st = current_sent[i];
-                                    if(st.id === contact.id) {
-                                        exists = true;
-                                        break;
-                                    }
-                                }
-
-                                if(!exists) {
-                                    _self.$store.commit('contacts/addSent', contact)
-                                }
-                            } else {
-                                _self.$store.commit('contacts/addSent', contact)
-                            }
-                        }
+            helpers.getSentContacts(function(contact) {
+                if(contact.hasOwnProperty('id')) {
+                    helpers.getUserInfo(contact.to_id, function(user) {
+                        contact.to_email = user.email;
+                        contact.to_name = user.username;
+                        _self.$store.commit('contacts/addSent', contact);
                     });
-                });
-                
+                }
             });
             
+            // New contact
+            helpers.getNotSeenContact(function(size) {
+                _self.$store.commit('contacts/notSeenContact', size);
+            });
+
             // Inbox
-            contactsRef.where('to_id', '==', current_login_id).orderBy('created_at', 'desc').onSnapshot(function(querySnapshot) {
-                var inbox = [];
-                var new_contact = [];
-
-                querySnapshot.docChanges().forEach(function(change) {
-                    var contact = change.doc.data();
-                    
-                    contact.id = change.doc.id;
-                    contact.created_at = getDate(contact.created_at);
-                   _self.getUserInfo(contact.to_id).then(res => {
-                        contact.from_email = res.email;
-                        contact.from_name = res.username;
-                        if(change.type === 'added') {
-                            var current_inbox = _self.$store.state.contacts.inbox;
-                            if(current_inbox.length) {
-                                var exists = false;
-                                for(var i in current_inbox) {
-                                    var ib = current_inbox[i];
-                                    if(ib.id === contact.id) {
-                                        exists = true;
-                                        break;
-                                    }
-                                }
-
-                                if(!exists) {
-                                    _self.$store.commit('contacts/addInbox', contact);
-                                }
-                            } else {
-                                _self.$store.commit('contacts/addInbox', contact);
-                            }
-                        }
-                    });
-
-                    if(contact.status === 0) {
-                        _self.$store.commit('alert/success', 'You got a new message');
-                        contactsRef.doc(contact.id).update({status: 1});
-                    }
-                });
-
+            helpers.getInboxContacts(function(contact, message) {
                 
-            })
+                if(contact.hasOwnProperty('id')) {
+                    helpers.getUserInfo(contact.from_id, function(user) {
+                        contact.from_email = user.email;
+                        contact.from_name = user.username;
+                        _self.$store.commit('contacts/addInbox', contact);
+                    });
+                }
+
+                if(message !== undefined && message.length) {
+                    _self.$store.commit('alert/success', message);
+                }
+            });
         },
         methods: {
-            async getUserInfo(user_id) {
-                var res = await this.$axios.$post('/getUserInfo', {current_login_id: user_id});
-                if(res.status) {
-                    return res.data;
-                }
-            }
         }
     }
 </script>

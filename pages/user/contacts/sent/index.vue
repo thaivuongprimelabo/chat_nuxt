@@ -36,7 +36,7 @@
                                     </tbody>
                                     <tbody  v-else>
                                         <tr>
-                                            <td colspan="4" style="text-align: center">(No data found)</td>
+                                            <td colspan="4" style="text-align: center">Loading...</td>
                                         </tr>
                                     </tbody>
                                 </table>

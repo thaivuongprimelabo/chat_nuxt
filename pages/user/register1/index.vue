@@ -4,7 +4,7 @@
           <div class="col-md-6 col-md-offset-3">
             <div class="row">
               <div class="col-md-12">
-                <Alert v-bind:error="error" v-bind:success="success"></Alert>
+                <Alert></Alert>
                 <form id="submitForm" @submit.prevent="onRegister">
                   <div class="panel panel-primary">
                     <div class="panel-heading">
@@ -49,6 +49,7 @@
 </template>
 <script>
     import Alert from '../../../components/Alert';
+    import helpers from '~/plugins/helpers';
     export default {
         components: {
             Alert
@@ -72,7 +73,6 @@
           };
         },
         mounted() {
-            console.log('mounted');
         },
         created() {
         },
@@ -80,24 +80,35 @@
             onBack() {
                 this.$router.replace('/user/login');
             },
-            async onRegister() {
-                this.disableButton = true;
-                var params = {
-                    form: this.form,
-                    configMail: {
-                        from: 'Administrator',
-                        to: this.form.email,
-                        subject: '【App】 Register successfully',
-                        html: './email_template/register_success.html'
+            onRegister() {
+                var _self = this;
+                _self.disableButton = true;
+
+                var config = {
+                    from: 'Administrator',
+                    to: _self.form.email,
+                    subject: '【App】 Register successfully',
+                    html: './email_template/register_success.html',
+                    data: {
+                        username: _self.form.username,
+                        email: _self.form.email,
+                        password: _self.form.password
                     }
                 }
-                var res = await this.$axios.$post('/register', params);
-                if(res.status) {
-                    this.$router.replace('/user/register1/success');
-                } else {
-                    this.error = res.error;
-                }
-                this.disableButton = false;
+
+                helpers.register(_self, async function(status, message) {
+                    if(status) {
+                        var res = await _self.$axios.$post('/sendmail', {config: config});
+                        if(res.status) {
+                            _self.$router.replace('/user/register1/success');
+                        } else {
+                            _self.$store.commit('alert/error', 'Server error');
+                        }
+                    } else {
+                        _self.$store.commit('alert/error', message);
+                    }
+                     _self.disableButton = false;
+                });
             }
         }
     }

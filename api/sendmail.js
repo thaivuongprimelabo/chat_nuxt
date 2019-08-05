@@ -2,8 +2,6 @@ import express from 'express'
 import nodemailer from 'nodemailer'
 import fs from 'fs'
 import handlebars  from 'handlebars'
-import os from 'os';
-import process from 'process';
 
 const app = express()
 
@@ -23,7 +21,7 @@ var sendMailHtml = function(path, callback) {
 
 app.post('/', (req, res) => {
 
-    var mainOptions = req.body.configMail;
+    var mainOptions = req.body.config;
 
     sendMailHtml(mainOptions.html, function(err, html) {
         var output = {
@@ -32,12 +30,7 @@ app.post('/', (req, res) => {
         }
 
         var template = handlebars.compile(html);
-        var replacements = {
-            username: req.body.form.username,
-            email: req.body.form.email,
-            password: req.body.form.password,
-            confirm_link: req.body.confirm_link
-        };
+        var replacements = mainOptions.data;
         var htmlToSend = template(replacements);
     
         var transporter =  nodemailer.createTransport({ // config mail server
@@ -47,12 +40,6 @@ app.post('/', (req, res) => {
                 pass: 'nuzmgnanjfseyygs'
             }
         });
-        // var mainOptions = { // thiết lập đối tượng, nội dung gửi mail
-        //     from: 'Administrator',
-        //     to: req.body.email,
-        //     subject: '【App】 Active mail',
-        //     html: htmlToSend
-        // }
 
         mainOptions.html = htmlToSend;
         

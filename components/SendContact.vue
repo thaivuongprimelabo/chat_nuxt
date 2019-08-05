@@ -55,6 +55,7 @@
 <script>
     import { mapMutations } from 'vuex'
     import { mapState } from 'vuex';
+    import helpers from '~/plugins/helpers';
 
     export default {
         components: {
@@ -105,25 +106,22 @@
             
         },
         methods: {
-            async onSend() {
+            onSend() {
                 var _self = this;
-                if(this.select.length) {
+                if(_self.select.length) {
                     _self.disableButton = true;
-                    this.contact.from_id =this.userInfo.id;
-                    this.contact.to_id = this.select;
-                    this.contact.created_at = new Date().getTime();
-                    var res = await this.$axios.$post('/addContact', {contact: this.contact});
-                    if(res.status) {
-                        this.contact.subject = '';
-                        this.contact.content = '';
-                        this.$store.commit('alert/success', 'Send contact successfully.');
-                    }
-
-                    _self.disableButton = false;
-                    
+                    _self.contact.from_id = _self.userInfo.id;
+                    _self.contact.to_id = _self.select;
+                    _self.contact.created_at = new Date().getTime();
+                    helpers.getContactsRef().add(_self.contact).then(function() {
+                        _self.contact.subject = '';
+                        _self.contact.content = '';
+                        _self.$store.commit('alert/success', 'Send contact successfully.');
+                        _self.disableButton = false;
+                    });
                 } else {
-                    this.$store.commit('alert/error', 'Please select an user to contact.');
-                    
+                    _self.$store.commit('alert/error', 'Please select an user to contact.');
+                    _self.disableButton = false;
                 }
                 
                 return false;
@@ -134,39 +132,6 @@
             },
             onClose() {
                 this.$store.commit('contacts/showSendForm', false);
-            },
-            getDate(input, format) {
-                if(format === undefined && format !== null) {
-                    format = 'yyyy-mm-dd hh:ii:ss';
-                }
-                var date = new Date();
-                if(input !== undefined && input !== null) {
-                    var date = new Date(input);
-                }
-
-                var year = date.getFullYear();
-                var month = date.getMonth() === 11 ? 12 : date.getMonth() + 1;
-                month = month.toString().length == 1 ? '0' + month : month.toString();
-                var day  = date.getDate();
-                day = day.toString().length == 1 ? '0' + day : day.toString();
-
-                var hour = date.getHours();
-                hour = hour.toString().length == 1 ? '0' + hour : hour.toString();
-                date.setMinutes(date.getMinutes() + 5);
-                date = new Date(date);
-                var minute = date.getMinutes();
-                minute = minute.toString().length == 1 ? '0' + minute : minute.toString();
-                var second = date.getSeconds();
-                second = second.toString().length == 1 ? '0' + second : second.toString();
-
-                format = format.replace('yyyy', year);
-                format = format.replace('mm', month);
-                format = format.replace('dd', day);
-                format = format.replace('hh', hour);
-                format = format.replace('ii', minute);
-                format = format.replace('ss', second);
-
-                return format;
             }
         }
     }

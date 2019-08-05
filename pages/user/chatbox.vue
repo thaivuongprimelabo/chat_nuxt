@@ -33,9 +33,9 @@
                                 <span class="input-group-addon">
                                     <i class="glyphicon glyphicon-pencil"></i>
                                 </span>
-                                <input type="text" class="form-control" id="txtText" v-model="message.text" placeholder="Type your message here ..">
+                                <input type="text" class="form-control" id="txtText" v-model="text" placeholder="Type your message here ..">
                                 <span class="input-group-btn">
-                                    <button class="btn btn-primary" type="button" id="btnSend" @click="this.onSend">Send</button>
+                                    <button class="btn btn-primary" type="button" id="btnSend" @click="this.onSend" :disabled="disableButton">Send</button>
                                 </span>
                                 </div>
                             </form>
@@ -49,23 +49,7 @@
 <script>
     import Contact from '../../components/Contact.vue';
     import firebase from 'firebase';
-    var config = {
-        apiKey: "AIzaSyBF6T-HeFPb1cLfq-jFfIpj2So7RbwViGo",
-        authDomain: "testfirebase9999.firebaseapp.com",
-        projectId: "testfirebase9999",
-        databaseURL: "https://testfirebase9999.firebaseio.com",
-        storageBucket: "testfirebase9999.appspot.com",
-    };
-    
-    !firebase.apps.length ? firebase.initializeApp(config) : '';
-
-    var current_login_id = localStorage.getItem('current_login_id');
-    var db = firebase.firestore();
-    var dbRealtime = firebase.database();
-    var usersRef = db.collection('users')
-    var messagesRef = db.collection('messages');
-    var userStatusDatabaseRef = dbRealtime.ref('/status/' + current_login_id);
-    var userStatusRef = dbRealtime.ref('/status');
+    import helpers from '~/plugins/helpers';
 
     export default {
         layout: 'main',
@@ -75,110 +59,51 @@
         },
         data: function() {
           return {
-              message: {
-                  text: '',
-                  name: '',
-                  created_at: ''
-              },
-              userOnline: [],
-              messages: [],
-              userInfo: {},
-              groups: []
+                message: {
+                    text: '',
+                    name: '',
+                    user_id: '',
+                    created_at: ''
+                },
+                text: '',
+                messages: [],
+                disableButton: true
           };
+        },
+        computed: {
+            userInfo() {
+                return this.$store.state.userInfo.data;
+            }
+        },
+        watch: {
+            text(newValue, oldValue) {
+                if(!newValue.length) {
+                    this.disableButton = true;
+                } else {
+                    this.disableButton = false;
+                }
+            }
         },
         mounted() {
         },
         created() {
-            
-            // this.online();
             var _self = this;
-
-            // _self.getUserInfo();
-            
-            messagesRef.orderBy('created_at', 'asc').onSnapshot(function(querySnapshot) {
-                _self.messages = [];
-                querySnapshot.forEach(function(doc) {
-                    _self.messages.push(doc.data());
-                });
-            });
-
-            // usersRef.onSnapshot(function(querySnapshot) {
-            //     _self.userOnline = [];
-            //     querySnapshot.forEach(function(doc) {
-            //         var user = doc.data();
-            //         if(doc.id === current_login_id) {
-            //             _self.userInfo = user;
-            //             return;
-            //         }
-
-            //         if(user.online && doc.id !== current_login_id) {
-            //             _self.userOnline.push(user);
-            //         }
-            //     });
-            // });
-
-            var isOfflineForDatabase = {
-                state: 'offline',
-            };
-
-            var isOnlineForDatabase = {
-                state: 'online',
-            };
-
-            // dbRealtime.ref('.info/connected').on('value', function(snapshot) {
-            //     if (snapshot.val() == false) {
-            //         return;
-            //     };
-
-            //     userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function() {
-            //         // The promise returned from .onDisconnect().set() will
-            //         // resolve as soon as the server acknowledges the onDisconnect() 
-            //         // request, NOT once we've actually disconnected:
-            //         // https://firebase.google.com/docs/reference/js/firebase.database.OnDisconnect
-
-            //         // We can now safely set ourselves as 'online' knowing that the
-            //         // server will mark us as offline once we lose connection.
-            //         userStatusDatabaseRef.set(isOnlineForDatabase);
-            //     });
-            // });
-
-            // userStatusRef.on('value', function(snapshot) {
-            //     var userStatus = snapshot.val();
-            //     var keys = Object.keys(userStatus);
-            //     if(keys.length) {
-            //         var user_online_list = [];
-            //         for(var i in keys) {
-            //             var user_id = keys[i];
-            //             var user_online = userStatus[user_id];
-                        
-            //             if(user_online.state === 'online' && user_id !== current_login_id) {
-                            
-            //                 user_online_list.push(user_id);
-            //             }
-            //         }
-            //         _self.getUsersOnline(user_online_list);
-            //     }
-            // });
+            helpers.getMessages(function(messages) {
+                _self.messages = messages;
+            })
         },
         methods: {
-            async getUsersOnline(user_online_list) {
-                if(user_online_list.length) {
-                    var res = await this.$axios.$post('/getUsersOnline', {user_online_list: user_online_list});
-                    if(res.status) {
-                        this.userOnline = res.data;
+            onSend() {
+                var _self = this;
+                _self.message.user_id = _self.userInfo.id;
+                _self.message.text = _self.text;
+                _self.message.name = _self.userInfo.username;
+                _self.message.created_at = new Date().getTime();
+                helpers.sendMessage(_self.message, function(id) {
+                    if(id) {
+                        _self.messages.push(message);
                     }
-                } else {
-                    this.userOnline = [];
-                }
-                
-            },
-            async onSend() {
-                this.message.name = this.userInfo.username;
-                this.message.created_at = new Date().getTime();
-                var res = await this.$axios.$post('/addMessage', {message: this.message});
-                if(res.status) {
-                    this.messages.push(this.message);
-                }
+                });
             }
         }
     }

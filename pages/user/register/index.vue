@@ -4,7 +4,7 @@
           <div class="col-md-6 col-md-offset-3">
             <div class="row">
               <div class="col-md-12">
-                <Alert v-bind:error="error" v-bind:success="success"></Alert>
+                <Alert></Alert>
                 <form id="submitForm" @submit.prevent="onRegister">
                   <div class="panel panel-primary">
                     <div class="panel-heading">
@@ -49,6 +49,9 @@
 </template>
 <script>
     import Alert from '../../../components/Alert';
+    import helpers from '~/plugins/helpers';
+import { async } from 'q';
+
     export default {
         components: {
             Alert
@@ -66,13 +69,10 @@
                   expired_at: '',
                   role_id: 2
               },
-              users: [],
-              error: '',
-              success: ''
+              config: {}
           };
         },
         mounted() {
-            console.log('mounted');
         },
         created() {
         },
@@ -80,89 +80,36 @@
             onBack() {
                 this.$router.replace('/user/login');
             },
-            async onRegister() {
-                this.disableButton = true;
-                this.form.expired_at = this.getExpired(5);
-                this.form.token = this.generateToken(64);
-                var params = {
-                    form: this.form,
-                    configMail: {
-                        from: 'Administrator',
-                        to: this.form.email,
-                        subject: '【App】 Confirm email',
-                        html: './email_template/confirm.html'
-                    },
-                    confirm_link: process.env.baseUrl + "/user/confirm?token=" + this.form.token
+            onRegister() {
+                var _self = this;
+                _self.disableButton = true;
+                _self.form.expired_at = helpers.getExpired(5);
+                _self.form.token = helpers.generateToken(64);
+                var config = {
+                    from: 'Administrator',
+                    to: _self.form.email,
+                    subject: '【App】 Confirm email',
+                    html: './email_template/confirm.html',
+                    data: {
+                        username: _self.form.username,
+                        email: _self.form.email,
+                        password: _self.form.password,
+                        confirm_link: process.env.baseUrl + "/user/confirm?token=" + _self.form.token
+                    }
                 }
-                var res = await this.$axios.$post('/register', params);
-                if(res.status) {
-                    this.$router.replace('/user/register/success');
-                } else {
-                    this.error = res.error;
-                }
-                this.disableButton = false;
-            },
-            generateToken(length) {
-                var text = "";
-                var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-                
-                for (var i = 0; i < length; i++)
-                    text += possible.charAt(Math.floor(Math.random() * possible.length));
-                
-                return text;
-            },
-            getExpired(minute) {
-                var date = new Date();
-                date.setMinutes(date.getMinutes() + minute);
-                date = new Date(date);
-                return date.getTime();
-                // var year = date.getFullYear();
-                // var month = date.getMonth() === 11 ? 12 : date.getMonth() + 1;
-                // month = month.toString().length == 1 ? '0' + month : month.toString();
-                // var day  = date.getDate();
-                // day = day.toString().length == 1 ? '0' + day : day.toString();
-
-                // var hour = date.getHours();
-                // hour = hour.toString().length == 1 ? '0' + hour : hour.toString();
-                // date.setMinutes(date.getMinutes() + minute);
-                // date = new Date(date);
-                // var minute = date.getMinutes();
-                // minute = minute.toString().length == 1 ? '0' + minute : minute.toString();
-                // var second = date.getSeconds();
-                // second = second.toString().length == 1 ? '0' + second : second.toString();
-            },
-            getDate(input, format) {
-                if(format === undefined) {
-                    format = 'dd/mm/yyyy hh:ii:ss';
-                }
-                var date = new Date();
-                if(input !== undefined) {
-                    var date = new Date(input);
-                }
-
-                var year = date.getFullYear();
-                var month = date.getMonth() === 11 ? 12 : date.getMonth() + 1;
-                month = month.toString().length == 1 ? '0' + month : month.toString();
-                var day  = date.getDate();
-                day = day.toString().length == 1 ? '0' + day : day.toString();
-
-                var hour = date.getHours();
-                hour = hour.toString().length == 1 ? '0' + hour : hour.toString();
-                date.setMinutes(date.getMinutes() + 5);
-                date = new Date(date);
-                var minute = date.getMinutes();
-                minute = minute.toString().length == 1 ? '0' + minute : minute.toString();
-                var second = date.getSeconds();
-                second = second.toString().length == 1 ? '0' + second : second.toString();
-
-                format = format.replace('yyyy', year);
-                format = format.replace('mm', month);
-                format = format.replace('dd', day);
-                format = format.replace('hh', hour);
-                format = format.replace('ii', minute);
-                format = format.replace('ss', second);
-
-                return format;
+                helpers.register(_self, async function(status, message) {
+                    if(status) {
+                        var res = await _self.$axios.$post('/sendmail', {config: config});
+                        if(res.status) {
+                            _self.$router.replace('/user/register/success');
+                        } else {
+                            _self.$store.commit('alert/error', 'Server error');
+                        }
+                    } else {
+                        _self.$store.commit('alert/error', message);
+                    }
+                     _self.disableButton = false;
+                });
             }
         }
     }

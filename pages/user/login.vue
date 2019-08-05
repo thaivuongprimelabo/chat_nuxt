@@ -5,7 +5,7 @@
           <div class="col-md-6 col-md-offset-3">
             <div class="row" id="loginForm">
               <div class="col-md-12">
-                    <Alert v-bind:error="error" v-bind:success="success"></Alert>
+                    <Alert></Alert>
                     <form id="submitForm" @submit.prevent="onLogin">
                         <div class="panel panel-primary">
                             <div class="panel-heading">
@@ -45,6 +45,9 @@
 </template>
 <script>
     import Alert from '../../components/Alert';
+    import md5 from 'md5';
+    import helpers from '~/plugins/helpers';
+
     export default {
         components: {
             Alert
@@ -56,9 +59,7 @@
                   email: '',
                   password: ''
               },
-              userList: [],
-              error: '',
-              success: ''
+              userList: []
           };
         },
         mounted() {
@@ -67,25 +68,18 @@
             var _self = this;
         },
         methods: {
-            async onLogin() {
-                this.disableButton = true;
-
-                var params = {
-                    form: this.form
-                }
-
-                var res = await this.$axios.$post('/login', params);
-                if(res.status) {
-                    var userInfo = res.data[0];
-                    this.error = '';
-                    this.success = res.success;
-                    localStorage.setItem('current_login_id', userInfo.id);
-                    this.$router.replace('/user/chatbox');
-                } else {
-                    this.success = '';
-                    this.error = res.error;
-                }
-                this.disableButton = false;
+            onLogin() {
+                var _self = this;
+                _self.disableButton = true;
+                helpers.login(_self, function(status, message) {
+                    if(status) {
+                        _self.$store.commit('alert/success', 'Login succeed');
+                        _self.$router.replace('/user/chatbox');
+                    } else {
+                        _self.$store.commit('alert/error', message);
+                    }
+                    _self.disableButton = false;
+                });
             },
             onRegister() {
                 this.$router.replace('/user/register');
