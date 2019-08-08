@@ -32,6 +32,12 @@
                                             <textarea  class="form-control" placeholder="Please input subject" rows="8" v-model="contact.content" required disabled></textarea>
                                         </div>
                                     </div>
+                                    <div class="form-group">
+                                        <label>Attach files</label>
+                                        <ul class="mt-1">
+                                            <li><a v-bind:href="contactData.file_link" target="_block">{{ contactData.filename }}</a></li>
+                                        </ul>
+                                    </div>
                                 </div>
                             </div>
                         </div>

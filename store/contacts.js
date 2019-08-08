@@ -10,17 +10,20 @@ export const state = () => ({
 
 export const mutations = {
     addInbox (state, inbox) {
-        var indx = -1;
+        var idx = -1;
+        var not_seen = 0;
         for(var i in state.inbox) {
-            var ib = state.inbox[i];
-            if(ib.id === inbox.id) {
-                indx = i;
-                break;
+            if(state.inbox[i].id === inbox.id) {
+                idx = i;
+            }
+
+            if(state.inbox[i].status <= 1) {
+                not_seen++;
             }
         }
 
-        if(indx >= 0) {
-            state.inbox[indx] = inbox;
+        if(idx >= 0) {
+            state.inbox[idx] = inbox;
         } else {
             if(!inbox.status) {
                 state.inbox.unshift(inbox);
@@ -28,29 +31,27 @@ export const mutations = {
                 state.inbox.push(inbox);
             }
         }
+
+        state.not_seen = not_seen;
     },
     addSent (state, sent) {
-        var indx = -1;
+        var idx = -1;
         for(var i in state.sent) {
-            var st = state.sent[i];
-            if(st.id === sent.id) {
-                indx = i;
-                break;
+            if(state.sent[i].id === sent.id) {
+                idx = i;
             }
         }
 
-        if(indx >= 0) {
-            state.sent[indx] = sent;
+        if(idx >= 0) {
+            state.sent[idx] = sent;
         } else {
-            if(!sent.status) {
-                state.sent.unshift(sent);
-            } else {
-                state.sent.push(sent);
-            }
+            state.sent.unshift(sent);
         }
     },
-    notSeenContact(state, not_seen) {
-        state.not_seen = not_seen;
+    setNotSeen(state, not_seen) {
+        if(state.not_seen > 0) {
+            state.not_seen = state.not_seen - 1;
+        }
     },
     showSendForm(state, showSendForm) {
         state.showSendForm = showSendForm;

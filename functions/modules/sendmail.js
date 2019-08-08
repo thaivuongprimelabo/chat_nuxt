@@ -14,8 +14,8 @@ var sendMailHtml = function(path, callback) {
     });
 };
 
-exports.sendMail = function(req, res) {
-    var mainOptions = req.body.config;
+exports.sendMail = function(req, res, callback) {
+    var mainOptions = req.body.configMail;
 
     sendMailHtml(mainOptions.html, function(err, html) {
         var output = {
@@ -24,7 +24,12 @@ exports.sendMail = function(req, res) {
         }
 
         var template = handlebars.compile(html);
-        var replacements = mainOptions.data;
+        var replacements = {
+            username: req.body.form.username,
+            email: req.body.form.email,
+            password: req.body.form.password,
+            confirm_link: req.body.confirm_link
+        };
         var htmlToSend = template(replacements);
     
         var transporter =  nodemailer.createTransport({ // config mail server
@@ -42,8 +47,8 @@ exports.sendMail = function(req, res) {
                 output.status = false;
                 output.message = err;
             }
-            res.status(200).json(output);
+            
+            callback(output);
         });
-        res.status(200).json(output);
     });
 }

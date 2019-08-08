@@ -39,6 +39,12 @@
                                             <textarea  class="form-control" placeholder="Please input subject" rows="8" v-model="reply_content"></textarea>
                                         </div>
                                     </div>
+                                    <div class="form-group">
+                                        <label>Attach files</label>
+                                        <ul class="mt-1">
+                                            <li><a v-bind:href="contactData.file_link" target="_block">{{ contactData.filename }}</a></li>
+                                        </ul>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -56,7 +62,8 @@
     </div>
 </template>
 <script>
-    import helpers from '~/plugins/helpers';
+    import { mapMutations } from 'vuex'
+    import { mapState } from 'vuex';
 
     export default {
         components: {
@@ -106,28 +113,32 @@
             
         },
         methods: {
-            onSend() {
+            async onSend() {
                 var _self = this;
-                if(_self.reply_content.length) {
+                if(this.reply_content.length) {
                     _self.disableButton = true;
-                    var subject = _self.contactData.subject.replace('[Reply from: ' + this.contactData.from_name + '] ', '');
+                    var subject = this.contactData.subject.replace('[Reply from: ' + this.contactData.from_name + '] ', '');
                     var contact = {
-                        from_id: _self.userInfo.id,
-                        to_id: _self.contactData.from_id,
-                        subject: '[Reply from: ' + _self.userInfo.username + '] ' + subject,
-                        content: _self.reply_content,
-                        reply_contact_id: _self.contactData.id,
+                        from_id: this.userInfo.id,
+                        to_id: this.contactData.from_id,
+                        subject: '[Reply from: ' + this.userInfo.username + '] ' + subject,
+                        content: this.reply_content,
+                        reply_contact_id: this.contactData.id,
                         created_at: new Date().getTime(),
                         status: 0
                     }
 
-                    helpers.getContactsRef().add(contact).then(function() {
-                        _self.$store.commit('alert/success', 'Reply contact successfully.');
-                        _self.disableButton = false;
-                    });
+                    var res = await this.$axios.$post('/addContact', {contact: contact});
+                    if(res.status) {
+                        
+                        this.$store.commit('alert/success', 'Reply contact successfully.');
+                    }
+
+                    _self.disableButton = false;
+                    
                 } else {
                     this.$store.commit('alert/error', 'Please input reply content.');
-                    _self.disableButton = false;
+                    
                 }
                 
                 return false;

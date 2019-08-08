@@ -1,5 +1,18 @@
 
 import sendmail from './api/sendmail';
+import login from './api/login';
+import updateOnline from './api/updateOnline';
+import confirmRegister from './api/confirmRegister';
+import register from './api/register';
+import getUserInfo from './api/getUserInfo';
+import getUsersOnline from './api/getUsersOnline';
+import getMessages from './api/getMessages';
+import getUsers from './api/getUsers';
+import addMessage from './api/addMessage';
+import addContact from './api/addContact';
+import getSentContacts from './api/getSentContacts';
+import getInboxContacts from './api/getInboxContacts';
+import updateContactStatus from './api/updateContactStatus';
 
 require('dotenv').config()
 
@@ -68,16 +81,27 @@ export default {
     ** You can extend webpack config here
     */
     extend(config, ctx) {
-      
     }
   },
   serverMiddleware: [
-    { path: '/api/sendmail', handler: sendmail }
+    // { path: '/api/sendmail', handler: sendmail },
+    { path: '/api/login', handler: login },
+    { path: '/api/updateOnline', handler: updateOnline },
+    { path: '/api/register', handler: register },
+    { path: '/api/confirmRegister', handler: confirmRegister },
+    { path: '/api/getUserInfo', handler: getUserInfo },
+    { path: '/api/getUsersOnline', handler: getUsersOnline },
+    // { path: '/api/getMessages', handler: getMessages },
+    { path: '/api/addContact', handler: addContact},
+    { path: '/api/getUsers', handler: getUsers},
+    { path: '/api/addMessage', handler: addMessage },
+    { path: '/api/getSentContacts', handler: getSentContacts},
+    { path: '/api/getInboxContacts', handler: getInboxContacts},
+    { path: '/api/updateContactStatus', handler: updateContactStatus},
   ],
 
   axios: {
     baseURL: 'https://testfirebase9999.firebaseapp.com/api'
-    // baseURL: 'http://localhost:5000/testfirebase9999/us-central1/api'
     // baseURL: 'http://localhost:3000/api'
   },
   // srcDir: 'client/'

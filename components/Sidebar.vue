@@ -104,8 +104,24 @@
         created() {
             var _self = this;
             var current_login_id = localStorage.getItem('current_login_id');
+            // _self.getUsers(current_login_id);
         },
         methods: {
+            // async getUsers(current_login_id) {
+            //     var res = await this.$axios.$post('/getUsers', {current_login_id: current_login_id});
+            //     if(res.status) {
+            //         this.users = res.data;
+            //     }
+            // },
+            onClickUser(index) {
+                var selected = !this.users[index].selected;
+                this.users[index].selected = selected;
+                if(selected) {
+                    var user = this.users[index];
+                    this.$store.commit('userSelect/add', user);
+                }
+                
+            },
             onClickMenu(path) {
                 this.$router.replace(path);
                 this.$store.commit('userSelect/add', {});

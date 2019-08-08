@@ -8,8 +8,48 @@
     ],
     "rewrites": [ 
       {
-        "source": "/api/sendmail",
-        "function": "sendmail"
+        "source": "/api/login",
+        "function": "login"
+      },
+      {
+        "source": "/api/updateOnline",
+        "function": "updateOnline"
+      },
+      {
+        "source": "/api/register",
+        "function": "register"
+      },
+      {
+        "source": "/api/confirmRegister",
+        "function": "confirmRegister"
+      },
+      {
+        "source": "/api/addMessage",
+        "function": "addMessage"
+      },
+      {
+        "source": "/api/getUserInfo",
+        "function": "getUserInfo"
+      },
+      {
+        "source": "/api/getUsersOnline",
+        "function": "getUsersOnline"
+      },
+      {
+        "source": "/api/getUsers",
+        "function": "getUsers"
+      },
+      {
+        "source": "/api/addContact",
+        "function": "addContact"
+      },
+      {
+        "source": "/api/updateContactStatus",
+        "function": "updateContactStatus"
+      },
+      {
+        "source": "/api/getInboxContacts",
+        "function": "getInboxContacts"
       },
       {
         "source": "/user",

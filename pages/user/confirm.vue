@@ -25,7 +25,6 @@
     </div>
 </template>
 <script>
-    import helpers from '~/plugins/helpers';
 
     export default {
         middleware: 'token',
@@ -37,15 +36,15 @@
         mounted() {
         },
         created() {
-            this.confirmAccount();
+            this.updateAccountStatus();
         },
         methods: {
-            confirmAccount() {
-                var _self = this;
-                var token = _self.$route.query.token;
-                helpers.confirm(token, function(status, message) {
-                    _self.message = message;
-                });
+            async updateAccountStatus() {
+                var token = this.$route.query.token;
+                var res = await this.$axios.$post('/confirmRegister', {token: token});
+                if(res.status) {
+                    this.message = res.message;
+                }
             },
             moveLogin() {
                 this.$router.replace('/user/login');

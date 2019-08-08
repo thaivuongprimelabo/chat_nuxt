@@ -36,7 +36,7 @@
                                     </tbody>
                                     <tbody  v-else>
                                         <tr>
-                                            <td colspan="4" style="text-align: center">Loading...</td>
+                                            <td colspan="4" style="text-align: center">(No data found)</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -69,13 +69,23 @@
         },
         computed: {
             sentContacts() {
-                return this.$store.state.contacts.sent;
+                return this.getSentContacts();
+            },
+            users() {
+                return this.$store.state.users.data;
             }
         },
         watch: {
             sentContacts(newValue, oldValue) {
-                return newValue;
+                if(newValue !== oldValue) {
+                    return newValue;
+                }
             },
+            users(newValue, oldValue) {
+                if(newValue !== oldValue) {
+                    return newValue;
+                }
+            }
         },
         mounted() {
         },
@@ -87,6 +97,22 @@
                 this.$store.commit('contacts/setContactData', contact);
                 this.$store.commit('contacts/showSendForm', false);
                 this.$router.push('/user/contacts/view');
+            },
+            getSentContacts() {
+                var contacts = this.$store.state.contacts.sent;
+                var users = this.$store.state.users.data;
+                for(var i in contacts) {
+                    var contact = contacts[i];
+                    for(var j in users) {
+                        var user = users[j];
+                        if(contact.to_id === user.id) {
+                            contact.to_name = user.username;
+                            contact.to_email = user.email;
+                            break;
+                        }
+                    }
+                }
+                return contacts;
             }
         }
     }

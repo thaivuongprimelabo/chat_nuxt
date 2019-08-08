@@ -33,7 +33,7 @@
     var current_login_id = localStorage.getItem('current_login_id');
     var db = firebase.firestore();
     var dbRealtime = firebase.database();
-    var usersRef = db.collection('users');
+    var usersRef = db.collection('users')
     var messagesRef = db.collection('messages');
     var userStatusDatabaseRef = dbRealtime.ref('/status/' + current_login_id);
     var userStatusRef = dbRealtime.ref('/status');
@@ -41,6 +41,7 @@
     export default {
         data: function() {
           return {
+              userInfo: {},
               functions: [
                   {
                       id: 1,
@@ -56,34 +57,24 @@
               current_login_id: null
           };
         },
-        computed: {
-            userInfo() {
-                return this.$store.state.userInfo.data;
-            }
-        },
-        watch: {
-            userInfo(newValue, oldValue) {
-                return newValue;
-            }
-        },
         mounted() {
-            
+
         },
         created() {
-            var _self = this;
-            _self.current_login_id = localStorage.getItem('current_login_id');
-
-            // Get user info
-            usersRef.doc(this.current_login_id).get().then(function(doc) {
-                var userInfo = doc.data();
-                userInfo.id = doc.id;
-                _self.$store.commit('userInfo/add', userInfo);
-            });
+            this.current_login_id = localStorage.getItem('current_login_id');
+            this.getUserInfo();
         },
         methods: {
+            async getUserInfo() {
+                var res = await this.$axios.$post('/getUserInfo', {current_login_id: this.current_login_id});
+                if(res.status) {
+                    this.userInfo = res.data;
+                    this.$store.commit('userInfo/add', this.userInfo);
+                }
+            },
             async onLogout() {
                 var isOfflineForDatabase = {
-                    state: 'before_offline',
+                    state: 'offline',
                 };
                 userStatusDatabaseRef.set(isOfflineForDatabase);
                 localStorage.removeItem('current_login_id');
