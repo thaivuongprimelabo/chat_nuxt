@@ -16,6 +16,7 @@ var realtimeDB = firebase.database();
 var usersRef = firestore.collection('users');
 var messagesRef = firestore.collection('messages');
 var contactsRef = firestore.collection('contacts');
+var groupsRef = firestore.collection('groups');
 var userStatusRef = realtimeDB.ref('/status');
 
 var helpers = {
@@ -229,6 +230,28 @@ var helpers = {
             });
             
         });
+    },
+    getGroups(callback) {
+        groupsRef.where('created_by', '==', helpers.getCurrentLoginId()).get().then(function(querySnapshot) {
+            var groups = [];
+            querySnapshot.forEach(function(doc) {
+                var group = doc.data();
+                group.id = doc.id;
+                groups.push(group);
+            });
+            callback(groups);
+        });
+    },
+    newGroup(group, callback) {
+        var new_group = group;
+        groupsRef.add(group).then(function(doc) {
+            
+            if(doc.id) {
+                // var new_group = doc.data();
+                new_group.id = doc.id;
+                callback(new_group, 'Created a new group');
+            }
+        })
     }
 }
 

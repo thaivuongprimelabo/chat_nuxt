@@ -11,6 +11,7 @@
                 </ul>
             </div>
         </div>
+        <Groups v-if="this.$nuxt.$route.name === 'user-chatbox'"></Groups>
         <div v-else>
             <div class="panel panel-primary">
                 <div class="panel-heading">
@@ -30,8 +31,12 @@
     </div>
 </template>
 <script>
+    import Groups from './Groups';
 
     export default {
+        components: {
+            Groups
+        },
         data: function() {
             return {
                 functions: [

@@ -131,6 +131,11 @@
                     _self.$store.commit('alert/success', message);
                 }
             });
+
+            // Groups
+            helpers.getGroups(function(groups) {
+                _self.$store.commit('groups/set', groups);
+            });
         },
         methods: {
         }
