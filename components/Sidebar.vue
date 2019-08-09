@@ -7,7 +7,7 @@
             </div>
             <div class="panel-body">
                 <ul id="listOnline" class="list-group">
-                    <li class="list-group-item" v-for="user in userOnline" v-bind:key="user.email">{{ user.username }}</li>
+                    <li class="list-group-item" v-for="user in userOnline" v-bind:key="user.id">{{ user.username }}</li>
                 </ul>
             </div>
         </div>
@@ -53,8 +53,7 @@
                         name: 'Sent',
                         count: 0
                     }
-                ],
-                userSelect: {}
+                ]
             }
         },
         computed: {

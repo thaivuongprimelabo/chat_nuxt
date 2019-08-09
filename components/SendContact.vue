@@ -39,6 +39,7 @@
                                             <textarea  class="form-control" placeholder="Please input subject" rows="8" v-model="contact.content" required></textarea>
                                         </div>
                                     </div>
+                                    <UploadFile ref="uploadFile"></UploadFile>
                                 </div>
                             </div>
                         </div>
@@ -53,12 +54,14 @@
     </div>
 </template>
 <script>
+    import UploadFile from '../components/UploadFile.vue';
     import { mapMutations } from 'vuex'
     import { mapState } from 'vuex';
     import helpers from '~/plugins/helpers';
 
     export default {
         components: {
+            UploadFile
         },
         data: function() {
           return {
@@ -68,7 +71,8 @@
                     subject: '',
                     content: '',
                     created_at: '',
-                    status: 0
+                    status: 0,
+                    attachments: []
                 },
                 select: '',
                 current_login_id: '',
@@ -113,11 +117,17 @@
                     _self.contact.from_id = _self.userInfo.id;
                     _self.contact.to_id = _self.select;
                     _self.contact.created_at = new Date().getTime();
-                    helpers.getContactsRef().add(_self.contact).then(function() {
-                        _self.contact.subject = '';
-                        _self.contact.content = '';
-                        _self.$store.commit('alert/success', 'Send contact successfully.');
-                        _self.disableButton = false;
+                    
+
+                    var attachments = _self.$refs.uploadFile.getAttachments();
+                    helpers.sendContact(_self, attachments, function(status, message) {
+                        if(status) {
+                            _self.contact.subject = '';
+                            _self.contact.content = '';
+                            _self.$refs.uploadFile.clear();
+                            _self.$store.commit('alert/success', message);
+                            _self.disableButton = false;
+                        }
                     });
                 } else {
                     _self.$store.commit('alert/error', 'Please select an user to contact.');

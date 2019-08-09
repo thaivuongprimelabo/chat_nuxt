@@ -34,6 +34,7 @@
                                 <button class="btn btn-primary" type="submit" id="btnLogin" :disabled="disableButton">Login</button>
                                 <button class="btn btn-danger" type="button" @click="this.onRegister">Register</button>
                                 <button class="btn btn-danger" type="button" @click="this.onRegister1">Register without confirm</button>
+                                <button class="btn btn-danger" type="button" @click="this.onRegisterAuthentication">Register by firebase</button>
                             </div>
                         </div>
                     </form>
@@ -86,6 +87,9 @@
             },
             onRegister1() {
                 this.$router.replace('/user/register1');
+            },
+            onRegisterAuthentication() {
+                this.$router.replace('/user/registerAuthentication');
             }
         }
     }

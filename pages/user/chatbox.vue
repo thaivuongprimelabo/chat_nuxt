@@ -101,7 +101,7 @@
                 _self.message.created_at = new Date().getTime();
                 helpers.sendMessage(_self.message, function(id) {
                     if(id) {
-                        _self.messages.push(message);
+                        // _self.messages.push(message);
                     }
                 });
             }

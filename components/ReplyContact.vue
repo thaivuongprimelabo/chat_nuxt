@@ -39,6 +39,9 @@
                                             <textarea  class="form-control" placeholder="Please input subject" rows="8" v-model="reply_content"></textarea>
                                         </div>
                                     </div>
+                                    <ul class="mt-1">
+                                        <li v-for="(attachment, index) in contactData.attachments" v-bind:key="index"><a v-bind:href="contactData.attachments[index].downloadUrl" target="_block" >{{ contactData.attachments[index].name }} ({{ contactData.attachments[index].size }})</a></li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>
@@ -56,24 +59,22 @@
     </div>
 </template>
 <script>
+    import UploadFile from '../components/UploadFile.vue';
     import helpers from '~/plugins/helpers';
 
     export default {
         components: {
+            UploadFile
         },
         data: function() {
           return {
                 reply_content: '',
                 current_login_id: '',
-                disableButton: false
+                disableButton: false,
           };
         },
         computed: {
             contactData() {
-                // if(this.$store.state.contacts.data.hasOwnProperty('id')) {
-                //     this.contact = this.$store.state.contacts.data
-                //     this.contact.reply_id = this.$store.state.contacts.data.id;
-                // }
                 return this.$store.state.contacts.data;
             },
             userInfo() {
@@ -179,4 +180,7 @@
     }
 </script>
 <style>
+.mt-1 {
+    margin-top: 10px;
+}
 </style>

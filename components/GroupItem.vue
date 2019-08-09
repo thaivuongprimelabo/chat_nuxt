@@ -13,7 +13,8 @@
 
         },
         props: {
-            groupItem: null
+            groupItem: null,
+            groups: null
         },
         data: function() {
             return {
@@ -22,14 +23,12 @@
         },
         computed: {
             groups1() {
-                console.log(this.makeGroupItem(this.$store.state.groups.data))
-                // this.childrens = this.makeGroupItem(this.$store.state.groups.data);
+                this.childrens = this.makeGroupItem(this.$store.state.groups.data);
                 return this.$store.state.groups.data;
             }
         },
         watch: {
-            groups(newValue, oldValue) {
-                console.log('GroupItem:watch')
+            groups1(newValue, oldValue) {
                 this.childrens = this.makeGroupItem(newValue);
                 return newValue;
             }
@@ -45,6 +44,7 @@
                         childrens.push(group);
                     }
                 }
+                return childrens;
             }
         }
     }

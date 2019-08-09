@@ -40,7 +40,7 @@
         },
         watch: {
             groups(newValue, oldValue) {
-                console.log('Groups:watch')
+                // console.log('Groups:watch')
                 this.groupItems = this.makeGroupItem(newValue);
                 return newValue;
             }

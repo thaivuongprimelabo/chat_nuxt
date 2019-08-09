@@ -1,4 +1,5 @@
 import firebase from 'firebase';
+import { sprintf } from 'sprintf-js';
 import md5 from 'md5';
 
 var config = {
@@ -12,14 +13,40 @@ var config = {
 
 var firestore = firebase.firestore();
 var realtimeDB = firebase.database();
+var storageRef = firebase.storage();
 
 var usersRef = firestore.collection('users');
 var messagesRef = firestore.collection('messages');
 var contactsRef = firestore.collection('contacts');
 var groupsRef = firestore.collection('groups');
 var userStatusRef = realtimeDB.ref('/status');
+var urls = [];
+
+storageRef.ref().constructor.prototype.putFiles = function(files) { 
+    var ref = this;
+    return Promise.all(files.map(function(file) {
+        return ref.child(file.name).put(file);
+    }));
+}
+
+storageRef.ref().constructor.prototype.getDownloadUrls = function(files) { 
+    var ref = this;
+    return Promise.all(files.map(function(file) {
+        return ref.child(file.name).getDownloadURL();
+    }));
+}
 
 var helpers = {
+    createUserAuthentication: function(form, callback) {
+        firebase.auth().createUserWithEmailAndPassword(form.email, form.password).then(function(res) {
+            callback(res);
+        }).catch(function(error) {
+            // Handle Errors here.
+            var errorCode = error.code;
+            var errorMessage = error.message;
+            // ...
+        });
+    },
     getCurrentLoginId: function() {
         return localStorage.getItem('current_login_id');
     },
@@ -231,6 +258,108 @@ var helpers = {
             
         });
     },
+    putStorageItem(item) {
+        // the return value will be a Promise
+        // var fileRef = storageRef.child(item.name);
+        
+        return storageRef.ref('images/' + item.name).put(item)
+        .then((snapshot) => {
+            storageRef.ref('images/' + item.name).getDownloadURL().then(function(url) {
+                urls.push({
+                    name: item.name,
+                    size: item.size,
+                    type: item.type,
+                    downloadUrl: url
+                })
+            })
+        }).catch((error) => {
+          console.log('One failed:', item, error.message)
+        });
+    },
+    uploadFile(attachments, callback) {
+        if(attachments.length) {
+
+            // var urls = [];
+
+            storageRef.ref().putFiles(attachments).then(function(snapshot) {
+                storageRef.ref().getDownloadUrls(attachments).then(function(url) {
+                    callback(url)
+                });
+            }).catch(function(error) {
+            // If any task fails, handle this
+            });
+
+            // Promise.all(
+            //     // Array of "Promises"
+            //     attachments.map(async item => await helpers.putStorageItem(item))
+            // )
+            // .then((url) => {
+            //     console.log(urls.length);
+            //     // callback(urls)
+            // })
+            // .catch((error) => {
+            //     console.log(`Some failed: `, error.message)
+            // });
+        }
+        // return new Promise(function (resolve, reject) {
+        //     var storageRef = firebase.storage().ref(fullDirectory+"/"+imageFile.name);
+    
+        //     //Upload file
+        //     var task = storageRef.put(imageFile);
+    
+        //     //Update progress bar
+        //     task.on('state_changed',
+        //         function progress(snapshot){
+        //             var percentage = snapshot.bytesTransferred / snapshot.totalBytes * 100;
+        //             uploader.value = percentage;
+        //         },
+        //         function error(err){
+    
+        //         },
+        //         function complete(){
+        //             var downloadURL = task.snapshot.downloadURL;
+        //         }
+        //     );
+        // });
+    },
+    sendContact(_self, attachments, callback) {
+        if(attachments.length) {
+            helpers.uploadFile(attachments, function(urls) {
+                for(var i in urls) {
+                    var fileInfo = {
+                        name: attachments[i].name,
+                        size: helpers.formatMemory(attachments[i].size),
+                        type: attachments[i].type,
+                        downloadUrl: urls[i]
+                    }
+
+                    _self.contact.attachments.push(fileInfo);
+                }
+
+                contactsRef.add(_self.contact).then(function(doc) {
+                    if(doc.id) {
+                        callback(true, 'Send contact successfully.');
+                    }
+                });
+            });
+        }
+        
+    },
+    formatMemory($memory) {
+        if ($memory >= 1024 * 1024 * 1024) {
+            return sprintf('%.1f GB', $memory / 1024 / 1024 / 1024);
+        }
+        
+        if ($memory >= 1024 * 1024) {
+            return sprintf('%.1f MB', $memory / 1024 / 1024);
+        }
+        
+        if ($memory >= 1024) {
+            return sprintf('%d KB', $memory / 1024);
+        }
+        
+        return sprintf('%d B', $memory);
+    },
     getGroups(callback) {
         groupsRef.where('created_by', '==', helpers.getCurrentLoginId()).get().then(function(querySnapshot) {
             var groups = [];
@@ -243,11 +372,12 @@ var helpers = {
         });
     },
     newGroup(group, callback) {
-        var new_group = group;
+        
         groupsRef.add(group).then(function(doc) {
             
             if(doc.id) {
                 // var new_group = doc.data();
+                var new_group = {...group};
                 new_group.id = doc.id;
                 callback(new_group, 'Created a new group');
             }

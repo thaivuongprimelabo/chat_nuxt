@@ -18,7 +18,7 @@
                     <div class="form-group">
                         <div class="input-group">
                             <span class="input-group-addon"><i class="glyphicon glyphicon-pencil"></i></span>
-                            <SelectMulti v-model="group.parent_id" @setSelectValue="setSelectValue($event)"></SelectMulti>
+                            <SelectMulti v-model="group.parent_id" ref="selectMulti" @setSelectValue="setSelectValue($event)"></SelectMulti>
                         </div>
                     </div>
                 </div>
@@ -56,14 +56,16 @@
         methods: {
             show() {
                 $(this.$refs.myModal).modal('show');
-                this.clear();
+                
             },
             hide() {
                 $(this.$refs.myModal).modal('hide');
+                this.clear();
             },
             clear() {
                 this.group.name = '';
                 this.group.parent_id = '';
+                this.$refs.selectMulti.clear();
             },
             setSelectValue(event) {
                 this.group.parent_id = event;
